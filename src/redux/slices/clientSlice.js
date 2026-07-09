@@ -9,12 +9,19 @@ const UPDATE_API = `${V_URL}/client/update-client-details`;
 const DELETE_API = `${V_URL}/client/delete-client-details`;
 
 // ================= GET CLIENTS =================
+
 export const fetchClients = createAsyncThunk(
   "clients/fetchClients",
-  async () => {
-    const res = await axios.get(GET_API, {
-      withCredentials: true
-    });
+  async ({ page, limit, search = "" } = {}) => {
+    const res = await axios.get(
+      `${GET_API}?page=${page}&limit=${limit}&search=${encodeURIComponent(
+        search
+      )}`,
+      {
+        withCredentials: true,
+      }
+    );
+
     return res.data;
   }
 );
@@ -28,7 +35,6 @@ export const addClient = createAsyncThunk(
         withCredentials: true
       });
 
-      dispatch(fetchClients()); // refresh list
       return res.data;
 
     } catch (err) {
@@ -117,10 +123,17 @@ const clientSlice = createSlice({
       .addCase(fetchClients.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchClients.fulfilled, (state, action) => {
-        state.loading = false;
-        state.data = action.payload;
-      })
+   .addCase(fetchClients.fulfilled, (state, action) => {
+  state.loading = false;
+  state.data = action.payload.data;
+
+  state.pagination = {
+    currentPage: action.payload.pagination.currentPage,
+    totalPages: action.payload.pagination.totalPages,
+    totalRecords: action.payload.pagination.totalRecords,
+    limit: action.payload.pagination.limit,
+  };
+})
       .addCase(fetchClients.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;

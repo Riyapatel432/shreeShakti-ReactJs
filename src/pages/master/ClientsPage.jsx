@@ -30,12 +30,13 @@ import {
   Receipt,
   LocationOn,
   LocationCity,
+  Home,
   Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
 import FormModal from '../../components/common/FormModal';
-
+import countries from "../../city.json";
 import {
   fetchClients,
   addClient,
@@ -94,17 +95,6 @@ const VALIDATION = {
   }
 };
 
-// ================= INDIAN STATES LIST =================
-const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
-  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
-  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura",
-  "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];
 
 export default function ClientsPage() {
 
@@ -119,10 +109,13 @@ export default function ClientsPage() {
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
-
+ 
+const [currentPage, setCurrentPage] = useState(1);
+const [limit, setLimit] = useState(10);
+const [search, setSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-
+const [cities, setCities] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const initialForm = {
     name: '',
@@ -133,26 +126,51 @@ export default function ClientsPage() {
     address: '',
     city: '',
     state: '',
-    status: 'active'
+    status: true
   };
 
   const [form, setForm] = useState(initialForm);
+const [debouncedSearch, setDebouncedSearch] = useState("");
+const {
+  data: clients,
+  loading: tableLoading,
+  pagination,
+} = useSelector((state) => state.clients);
 
-  const { data: clients, loading: tableLoading } = useSelector(
-    (state) => state.clients
+useEffect(() => {
+  dispatch(
+    fetchClients({
+      page: currentPage,
+      limit,
+      search:debouncedSearch,
+    })
   );
+}, [dispatch, currentPage, limit, debouncedSearch]);
 
-  useEffect(() => {
-    dispatch(fetchClients());
-  }, [dispatch]);
+useEffect(() => {
+  setCurrentPage(1);
+}, [debouncedSearch]);
+
+useEffect(() => {
+  const handler = setTimeout(() => {
+    setDebouncedSearch(search);
+  }, 500);
+
+  return () => {
+    clearTimeout(handler);
+  };
+}, [search]);
 
   // ================= SINGLE FIELD VALIDATOR =================
   const validateField = useCallback((fieldName, value) => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
 
-    const trimmed = (value || "").trim();
-
+  
+const trimmed =
+  typeof value === "string"
+    ? value.trim()
+    : String(value ?? "").trim();
     // Required check
     if (rules.required && !trimmed) {
       return `${fieldName === 'gst_no' ? 'GST No' :
@@ -234,7 +252,21 @@ export default function ClientsPage() {
     if (['name', 'city', 'state'].includes(fieldName)) {
       value = rawValue.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
     }
+if (fieldName === "state") {
+  const selectedState = states.find(
+    (s) => s.name === value
+  );
 
+  setCities(selectedState?.cities || []);
+
+  setForm((prev) => ({
+    ...prev,
+    state: value,
+    city: "", // reset city when state changes
+  }));
+
+  return;
+}
     setForm((prev) => ({ ...prev, [fieldName]: value }));
 
     // Real-time validation only if field was touched
@@ -285,8 +317,13 @@ export default function ClientsPage() {
       address: row.address || '',
       city: row.city || '',
       state: row.state || '',
-      status: row.status || 'active'
+      status: row.status ?? true
     });
+    const selectedState = states.find(
+  (s) => s.name === row.state
+);
+
+setCities(selectedState?.cities || []);
     setErrors({});
     setTouched({});
     setModalOpen(true);
@@ -314,6 +351,13 @@ export default function ClientsPage() {
 
       // Check if the action was fulfilled
      if (res.meta?.requestStatus === "fulfilled") {
+ dispatch(
+    fetchClients({
+      page: currentPage,
+      limit,
+      search,
+    })
+  );
 
   setSuccessMessage(
     isEdit
@@ -375,7 +419,8 @@ const handleDeleteConfirm = async () => {
       id: 'sr',
       label: 'Sr No',
       width: 80,
-      render: (_, index) => index + 1
+      render: (_, index) =>
+  (currentPage - 1) * limit + index + 1
     },
     { id: 'company_name', label: 'Company Name' },
     { id: 'name', label: 'Client Name' },
@@ -389,11 +434,11 @@ const handleDeleteConfirm = async () => {
       label: 'Status',
       render: (row) => (
         <Chip
-          label={row.status}
-          size="small"
-          color={row.status === 'active' ? 'success' : 'default'}
-          variant="outlined"
-        />
+  label={row.status ? "Active" : "Inactive"}
+  size="small"
+  color={row.status ? "success" : "default"}
+  variant="outlined"
+/>
       )
     },
     {
@@ -417,6 +462,11 @@ const handleDeleteConfirm = async () => {
     }
   ];
 
+  const india = countries.find(
+  (country) => country.name === "India"
+);
+
+const states = india?.states || [];
   // ================= UI =================
   return (
     <Box>
@@ -434,15 +484,35 @@ const handleDeleteConfirm = async () => {
       </Box>
 
       {/* TABLE */}
-      <DataTable
-        title="All Clients"
-        columns={columns}
-        data={clients?.data || []}
-        loading={tableLoading}
-        searchPlaceholder="Search clients..."
-        onAddClick={handleAdd}
-        addLabel="New Client"
-      />
+<DataTable
+  title="All Clients"
+  columns={columns}
+  data={clients || []}
+  loading={tableLoading}
+
+  searchPlaceholder="Search clients..."
+  onSearch={(value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  }}
+
+  currentPage={currentPage}
+  totalPages={pagination?.totalPages || 1}
+  totalRecords={pagination?.totalRecords || 0}
+  rowsPerPage={limit}
+
+  onPageChange={(page) => {
+    setCurrentPage(page);
+  }}
+
+  onRowsPerPageChange={(newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  }}
+
+  onAddClick={handleAdd}
+  addLabel="New Client"
+/>
 
       {/* MODAL */}
    <FormModal
@@ -463,18 +533,19 @@ const handleDeleteConfirm = async () => {
     <Grid size={{ xs: 12, md: 4 }}>
       <TextField
         fullWidth
-        required
         label="Client Name"
         value={form.name}
         onChange={(e) => handleFieldChange('name', e.target.value)}
         onBlur={() => handleBlur('name')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Person fontSize="small" />
-            </InputAdornment>
-          )
-        }}
+         slotProps={{
+    input: {
+      startAdornment: (
+        <InputAdornment position="start">
+          <Person fontSize="small" />
+        </InputAdornment>
+      ),
+    },
+  }}
         {...fieldProps("name")}
       />
     </Grid>
@@ -482,18 +553,19 @@ const handleDeleteConfirm = async () => {
     <Grid size={{ xs: 12, md: 4 }}>
       <TextField
         fullWidth
-        required
         label="Company Name"
         value={form.company_name}
         onChange={(e) => handleFieldChange('company_name', e.target.value)}
         onBlur={() => handleBlur('company_name')}
-        InputProps={{
-          startAdornment: (
+                slotProps={{
+    input: {
+      startAdornment: (
             <InputAdornment position="start">
               <Business fontSize="small" />
             </InputAdornment>
           )
-        }}
+    },
+  }}
         {...fieldProps("company_name")}
       />
     </Grid>
@@ -501,18 +573,19 @@ const handleDeleteConfirm = async () => {
     <Grid size={{ xs: 12, md: 4 }}>
       <TextField
         fullWidth
-        required
         label="Email Address"
         value={form.email}
         onChange={(e) => handleFieldChange('email', e.target.value)}
         onBlur={() => handleBlur('email')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
+         slotProps={{
+    input: {
+      startAdornment: (
+         <InputAdornment position="start">
               <EmailIcon fontSize="small" />
             </InputAdornment>
-          )
-        }}
+      ),
+    },
+  }}
         {...fieldProps("email")}
       />
     </Grid>
@@ -521,18 +594,19 @@ const handleDeleteConfirm = async () => {
     <Grid size={{ xs: 12, md: 4 }}>
       <TextField
         fullWidth
-        required
         label="Phone Number"
         value={form.phone}
         onChange={(e) => handleFieldChange('phone', e.target.value)}
         onBlur={() => handleBlur('phone')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
+                slotProps={{
+    input: {
+      startAdornment: (
+         <InputAdornment position="start">
               <PhoneIcon fontSize="small" />
             </InputAdornment>
-          )
-        }}
+      ),
+    },
+  }}
         {...fieldProps("phone")}
       />
     </Grid>
@@ -540,18 +614,19 @@ const handleDeleteConfirm = async () => {
     <Grid size={{ xs: 12, md: 4 }}>
       <TextField
         fullWidth
-        required
         label="GST Number"
         value={form.gst_no}
         onChange={(e) => handleFieldChange('gst_no', e.target.value)}
         onBlur={() => handleBlur('gst_no')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Receipt fontSize="small" />
-            </InputAdornment>
-          )
-        }}
+        slotProps={{
+                  input: {
+                    startAdornment: (
+                    <InputAdornment position="start">
+                            <Receipt fontSize="small" />
+                          </InputAdornment>
+                    ),
+                  },
+                }}
         {...fieldProps("gst_no")}
       />
     </Grid>
@@ -559,71 +634,75 @@ const handleDeleteConfirm = async () => {
     <Grid size={{ xs: 12, md: 4 }}>
       <TextField
         fullWidth
-        required
         multiline
         minRows={1}
         label="Address"
         value={form.address}
         onChange={(e) => handleFieldChange('address', e.target.value)}
         onBlur={() => handleBlur('address')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <LocationOn fontSize="small" />
-            </InputAdornment>
-          )
-        }}
+         slotProps={{
+    input: {
+      startAdornment: (
+        <InputAdornment position="start">
+          <Home fontSize="small" />
+        </InputAdornment>
+      ),
+    },
+  }}
         {...fieldProps("address")}
       />
     </Grid>
 
     {/* ================= ROW 3 ================= */}
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        select
-        label="State"
-        value={form.state}
-        onChange={(e) => handleFieldChange("state", e.target.value)}
-      >
-        {INDIAN_STATES.map((state) => (
-          <MenuItem key={state} value={state}>
-            {state}
-          </MenuItem>
-        ))}
-      </TextField>
-    </Grid>
+   <Grid size={{ xs: 12, md: 4 }}>
+  <TextField
+    fullWidth
+    select
+    label="State"
+    value={form.state}
+    onChange={(e) => handleFieldChange("state", e.target.value)}
+    onBlur={() => handleBlur("state")}
+    {...fieldProps("state")}
+  >
+    {states.map((state) => (
+      <MenuItem key={state.name} value={state.name}>
+        {state.name}
+      </MenuItem>
+    ))}
+  </TextField>
+</Grid>
 
     <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        required
-        label="City"
-        value={form.city}
-        onChange={(e) => handleFieldChange('city', e.target.value)}
-        onBlur={() => handleBlur('city')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <LocationCity fontSize="small" />
-            </InputAdornment>
-          )
-        }}
-        {...fieldProps("city")}
-      />
-    </Grid>
-
+  <TextField
+    fullWidth
+    select
+    label="City"
+    value={form.city}
+    onChange={(e) => handleFieldChange("city", e.target.value)}
+    onBlur={() => handleBlur("city")}
+    disabled={!form.state}
+    {...fieldProps("city")}
+  >
+    {cities.map((city) => (
+      <MenuItem key={city.name} value={city.name}>
+        {city.name}
+      </MenuItem>
+    ))}
+  </TextField>
+</Grid>
     <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        select
-        label="Status"
-        value={form.status}
-        onChange={(e) => setForm({ ...form, status: e.target.value })}
-      >
-        <MenuItem value="active">Active</MenuItem>
-        <MenuItem value="inactive">Inactive</MenuItem>
-      </TextField>
+   <TextField
+  fullWidth
+  select
+  label="Status"
+  value={form.status}
+  onChange={(e) =>
+    setForm({ ...form, status: e.target.value === true })
+  }
+>
+  <MenuItem value={true}>Active</MenuItem>
+        <MenuItem value={false}>Inactive</MenuItem>
+</TextField>
     </Grid>
 
   </Grid>
@@ -633,7 +712,7 @@ const handleDeleteConfirm = async () => {
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
         <DialogTitle>Delete Client</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this client? This action cannot be undone.
+          Are you sure you want to delete this client?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>

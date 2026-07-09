@@ -6,7 +6,7 @@ import {
   Box, Typography, Divider, Tooltip, useMediaQuery, useTheme
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon, Storage as MasterIcon, ShoppingCart as PurchaseIcon,
+  Dashboard as DashboardIcon, Storage as MasterIcon, ShoppingCart as PurchaseIcon, PriceCheck as PriceIcon, CurrencyRupee as RupeeIcon,
   Inventory as InventoryIcon, PrecisionManufacturing as ProductionIcon,
   FactCheck as QCIcon, Transform as IssueIcon, People as HRIcon,
   Assessment as ReportsIcon, SettingsApplications as SettingsIcon,
@@ -21,43 +21,49 @@ const menuItems = [
   { title: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
   { title: 'Master Management', icon: <MasterIcon />, path: '/admin/master', sub: [
     { name: 'Users', path: '/admin/master/users' }, { name: 'Roles & Permissions', path: '/admin/master/roles' },
-    { name: 'Customers', path: '/admin/master/customers' }, { name: 'Vendors', path: '/admin/master/vendors' },
-    { name: 'Clients', path: '/admin/master/clients' },
-    { name: 'Projects', path: '/admin/master/projects' }, { name: 'Units', path: '/admin/master/units' },
-    { name: 'Departments', path: '/admin/master/departments' }, { name: 'Materials Master', path: '/admin/master/materials' },
-    { name: 'Item Categories', path: '/admin/master/categories' }, { name: 'Drawing Master', path: '/admin/master/drawings' },
-    { name: 'Grid Master', path: '/admin/master/grids' }, { name: 'Heat Number Master', path: '/admin/master/heat-numbers' },
+    // { name: 'Customers', path: '/admin/master/customers' }, { name: 'Vendors', path: '/admin/master/vendors' },
+    { name: 'Client', path: '/admin/master/clients' },
+    { name: 'Product Category', path: '/admin/master/product-categories' },
+     { name: 'Unit', path: '/admin/master/units' },
+     {name: "Moc", path: '/admin/master/mocs'},
   ]},
-  { title: 'Purchase Management', icon: <PurchaseIcon />, path: '/admin/purchase', sub: [
-    { name: 'Purchase Requisition', path: '/admin/purchase/requisition' }, { name: 'Purchase Offer', path: '/admin/purchase/offer' },
-    { name: 'Purchase Order', path: '/admin/purchase/order' }, { name: 'Vendor Comparison', path: '/admin/purchase/comparison' },
-    { name: 'Goods Receipt (GRN)', path: '/admin/purchase/grn' },
-  ]},
-  { title: 'Inventory Management', icon: <InventoryIcon />, path: '/admin/inventory', sub: [
-    { name: 'Main Stock', path: '/admin/inventory/stock' }, { name: 'Stock Transfer', path: '/admin/inventory/transfer' },
-    { name: 'Stock Adjustment', path: '/admin/inventory/adjustment' }, { name: 'Bin Management', path: '/admin/inventory/bins' },
-    { name: 'IMIR Management', path: '/admin/inventory/imir' }, { name: 'Material Tracking', path: '/admin/inventory/tracking' },
-  ]},
-  { title: 'Production Management', icon: <ProductionIcon />, path: '/admin/production', sub: [
-    { name: 'Drawing Wise Planning', path: '/admin/production/planning' }, { name: 'Cutting', path: '/admin/production/cutting' },
-    { name: 'Fitting Shop', path: '/admin/production/fitting' }, { name: 'Welding Station', path: '/admin/production/welding' },
-    { name: 'Assembly Line', path: '/admin/production/assembly' }, { name: 'Packing Stage', path: '/admin/production/packing' },
-    { name: 'Dispatch Planning', path: '/admin/production/dispatch' },
-  ]},
-  { title: 'Quality Control', icon: <QCIcon />, path: '/admin/quality', sub: [
-    { name: 'Incoming Inspection', path: '/admin/quality/incoming' }, { name: 'FIM Inspection', path: '/admin/quality/fim' },
-    { name: 'NCR Management', path: '/admin/quality/ncr' }, { name: 'Test Certificates', path: '/admin/quality/certificates' },
-    { name: 'Material Approval', path: '/admin/quality/approval' },
-  ]},
-  { title: 'Issue Management', icon: <IssueIcon />, path: '/admin/issue', sub: [
-    { name: 'Material Issue Request', path: '/admin/issue/request' }, { name: 'Issue Acceptance', path: '/admin/issue/acceptance' },
-    { name: 'Return Material', path: '/admin/issue/return' }, { name: 'Consumption Tracking', path: '/admin/issue/consumption' },
-  ]},
-  { title: 'HR & Payroll', icon: <HRIcon />, path: '/admin/hr', sub: [
-    { name: 'Employee Master', path: '/admin/hr/employees' }, { name: 'Attendance', path: '/admin/hr/attendance' },
-    { name: 'Leave Management', path: '/admin/hr/leaves' }, { name: 'Salary Processing', path: '/admin/hr/salaries' },
-    { name: 'Payslip Generation', path: '/admin/hr/payslips' },
-  ]},
+
+  { title: 'Product', icon: <InventoryIcon />, path: '/admin/products' },
+  { title: 'Price', icon: <RupeeIcon />, path: '/admin/price' },
+  { title: 'Costing Sheet', icon: <DashboardIcon />, path: '/admin/costingSheet' },
+
+  { title: 'Quotations', icon: <DashboardIcon />, path: '/admin/quotations' },
+
+  // { title: 'Purchase Management', icon: <PurchaseIcon />, path: '/admin/purchase', sub: [
+  //   { name: 'Purchase Requisition', path: '/admin/purchase/requisition' }, { name: 'Purchase Offer', path: '/admin/purchase/offer' },
+  //   { name: 'Purchase Order', path: '/admin/purchase/order' }, { name: 'Vendor Comparison', path: '/admin/purchase/comparison' },
+  //   { name: 'Goods Receipt (GRN)', path: '/admin/purchase/grn' },
+  // ]},
+  // { title: 'Inventory Management', icon: <InventoryIcon />, path: '/admin/inventory', sub: [
+  //   { name: 'Main Stock', path: '/admin/inventory/stock' }, { name: 'Stock Transfer', path: '/admin/inventory/transfer' },
+  //   { name: 'Stock Adjustment', path: '/admin/inventory/adjustment' }, { name: 'Bin Management', path: '/admin/inventory/bins' },
+  //   { name: 'IMIR Management', path: '/admin/inventory/imir' }, { name: 'Material Tracking', path: '/admin/inventory/tracking' },
+  // ]},
+  // { title: 'Production Management', icon: <ProductionIcon />, path: '/admin/production', sub: [
+  //   { name: 'Drawing Wise Planning', path: '/admin/production/planning' }, { name: 'Cutting', path: '/admin/production/cutting' },
+  //   { name: 'Fitting Shop', path: '/admin/production/fitting' }, { name: 'Welding Station', path: '/admin/production/welding' },
+  //   { name: 'Assembly Line', path: '/admin/production/assembly' }, { name: 'Packing Stage', path: '/admin/production/packing' },
+  //   { name: 'Dispatch Planning', path: '/admin/production/dispatch' },
+  // ]},
+  // { title: 'Quality Control', icon: <QCIcon />, path: '/admin/quality', sub: [
+  //   { name: 'Incoming Inspection', path: '/admin/quality/incoming' }, { name: 'FIM Inspection', path: '/admin/quality/fim' },
+  //   { name: 'NCR Management', path: '/admin/quality/ncr' }, { name: 'Test Certificates', path: '/admin/quality/certificates' },
+  //   { name: 'Material Approval', path: '/admin/quality/approval' },
+  // ]},
+  // { title: 'Issue Management', icon: <IssueIcon />, path: '/admin/issue', sub: [
+  //   { name: 'Material Issue Request', path: '/admin/issue/request' }, { name: 'Issue Acceptance', path: '/admin/issue/acceptance' },
+  //   { name: 'Return Material', path: '/admin/issue/return' }, { name: 'Consumption Tracking', path: '/admin/issue/consumption' },
+  // ]},
+  // { title: 'HR & Payroll', icon: <HRIcon />, path: '/admin/hr', sub: [
+  //   { name: 'Employee Master', path: '/admin/hr/employees' }, { name: 'Attendance', path: '/admin/hr/attendance' },
+  //   { name: 'Leave Management', path: '/admin/hr/leaves' }, { name: 'Salary Processing', path: '/admin/hr/salaries' },
+  //   { name: 'Payslip Generation', path: '/admin/hr/payslips' },
+  // ]},
   { title: 'Reports', icon: <ReportsIcon />, path: '/admin/reports', sub: [
     { name: 'Stock Reports', path: '/admin/reports/stock' }, { name: 'Purchase Reports', path: '/admin/reports/purchase' },
     { name: 'Production Reports', path: '/admin/reports/production' }, { name: 'Packing Reports', path: '/admin/reports/packing' },
@@ -129,7 +135,17 @@ export default function Sidebar() {
           <ListItemIcon sx={{ minWidth: 34, color: isActive ? activeColor : inactiveColor, '& svg': { fontSize: 20 } }}>
             {item.icon}
           </ListItemIcon>
-          <ListItemText primary={item.title} primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive ? 600 : 500 }} />
+          <ListItemText
+  primary={item.title}
+  slotProps={{
+    primary: {
+      sx: {
+        fontSize: '0.875rem',
+        fontWeight: isActive ? 600 : 500,
+      },
+    },
+  }}
+/>
           {hasSub && (isExp ? <ExpandLess sx={{ fontSize: 16 }} /> : <ExpandMore sx={{ fontSize: 16 }} />)}
         </ListItemButton>
 
@@ -144,7 +160,17 @@ export default function Sidebar() {
                     color: isSub ? activeColor : inactiveColor,
                     '&:hover': { color: theme.palette.text.primary, bgcolor: hoverBg }
                   }}>
-                    <ListItemText primary={s.name} primaryTypographyProps={{ fontSize: '0.8125rem', fontWeight: isSub ? 600 : 400 }} />
+                    <ListItemText
+  primary={s.name}
+  slotProps={{
+    primary: {
+      sx: {
+        fontSize: '0.8125rem',
+        fontWeight: isSub ? 600 : 400,
+      },
+    },
+  }}
+/>
                   </ListItemButton>
                 );
               })}
@@ -157,7 +183,7 @@ export default function Sidebar() {
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.paper' }}>
-      <Box sx={{ height: 72, display: 'flex', alignItems: 'center', px: sidebarOpen ? 2 : 1, justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
+      {/* <Box sx={{ height: 72, display: 'flex', alignItems: 'center', px: sidebarOpen ? 2 : 1, justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
         {sidebarOpen ? (
           <Box>
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.65rem' }}>
@@ -170,7 +196,45 @@ export default function Sidebar() {
         ) : (
           <Typography sx={{ color: 'primary.main', fontWeight: 900, fontSize: '1rem' }}>SS</Typography>
         )}
-      </Box>
+      </Box> */}
+
+      <Box
+  sx={{
+    height: 72,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    px: 1.5,
+    overflow: 'hidden',
+    bgcolor: '#fff'
+  }}
+>
+  {sidebarOpen ? (
+    <Box
+      component="img"
+      src="/logo.png" // Put your logo inside public/logo.png
+      alt="Shree Shakti Engineering Works"
+      sx={{
+        width: 160,
+        height: 'auto',
+        maxHeight: 50,
+        objectFit: 'contain',
+        transition: 'all 0.3s ease'
+      }}
+    />
+  ) : (
+    <Box
+      component="img"
+      src="/logo-icon.png" // Optional small icon for collapsed sidebar
+      alt="SS"
+      sx={{
+        width: 36,
+        height: 36,
+        objectFit: 'contain'
+      }}
+    />
+  )}
+</Box>
       <Divider />
 
       <Box sx={{ flexGrow: 1, overflowY: 'auto', py: 1, px: sidebarOpen ? 1 : 0.5 }}>

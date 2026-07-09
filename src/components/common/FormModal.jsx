@@ -61,7 +61,7 @@ export default function FormModal({
             borderColor: 'divider'
           }}
         >
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold" component="div">
             {title}
           </Typography>
 

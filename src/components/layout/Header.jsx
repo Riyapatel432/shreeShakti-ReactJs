@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,6 +17,11 @@ import {
   toggleThemeMode, setSidebarOpen, setFinancialYear, setPlant, markAllNotificationsRead, logout
 } from '../../redux/slices/erpSlice';
 import { financialYears, plants } from '../../data/mockData';
+import logo from "../../assets/Shree-shakti-logo.png";
+import lightLogo from "../../assets/Shree-shakti-logo.png";
+import darkLogo from "../../assets/Shree-shakti-logo-white.png";
+import axios from "axios";
+import { V_URL } from "../../baseUrl";
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -25,28 +30,52 @@ export default function Header() {
   const [anchorProfile, setAnchorProfile] = useState(null);
   const [anchorNotif, setAnchorNotif] = useState(null);
   const unread = notifications.filter(n => !n.read).length;
+  const [user, setUser] = useState(null);
 
+useEffect(() => {
+  const getProfile = async () => {
+    try {
+      const res = await axios.get(
+        `${V_URL}/auth/get-profile`,
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        setUser(res.data.user);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  getProfile();
+}, []);
   return (
     <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}>
       <Toolbar sx={{ justifyContent: 'space-between', minHeight: 64 }}>
 
         {/* Left: Menu + Logo */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton color="inherit" onClick={() => dispatch(setSidebarOpen(!sidebarOpen))}>
-            <MenuIcon />
-          </IconButton>
-          <Box sx={{ display: { xs: 'none', sm: 'flex' }, position: 'relative', width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
-            <SettingsIcon sx={{ color: 'primary.main', fontSize: 40 }} />
-            <Typography variant="caption" sx={{ position: 'absolute', color: 'warning.main', fontWeight: 900, fontSize: '0.6rem', letterSpacing: '-0.5px', mt: 0.2 }}>SEW</Typography>
-          </Box>
-          <Typography variant="h6" noWrap fontWeight={900} sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'primary.main', letterSpacing: '0.5px', ml: 0.5, lineHeight: 1.1 }}>
-            SHREE SHAKTI
-            <Box component="span" sx={{ color: 'warning.main', fontWeight: 700, fontSize: '0.65em', display: 'block', letterSpacing: '1px' }}>
-              ENGINEERING WORKS
-            </Box>
-          </Typography>
-        </Box>
+      
+<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+  <IconButton
+    color="inherit"
+    onClick={() => dispatch(setSidebarOpen(!sidebarOpen))}
+  >
+    <MenuIcon />
+  </IconButton>
 
+<Box
+  component="img"
+  src={themeMode === "dark" ? darkLogo : lightLogo}
+  alt="Shree Shakti Engineering Works"
+  sx={{
+    width: { xs: 150, sm: 140 },
+    height: { xs: 60, sm: 70 },
+    objectFit: "contain",
+    ml: 0.5,
+  }}
+/>
+</Box>
         {/* Middle: Search + Selectors */}
         <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 2, flexGrow: 1, justifyContent: 'center' }}>
           <Paper elevation={0} sx={{
@@ -58,7 +87,7 @@ export default function Header() {
             <InputBase sx={{ ml: 1, flex: 1, fontSize: '0.875rem' }} placeholder="Search drawings, POs..." />
           </Paper>
 
-          <FormControl size="small" sx={{ minWidth: 190 }}>
+          {/* <FormControl size="small" sx={{ minWidth: 190 }}>
             <Select value={selectedPlant} onChange={e => dispatch(setPlant(e.target.value))}
               renderValue={val => (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.82rem', fontWeight: 600 }}>
@@ -69,7 +98,7 @@ export default function Header() {
               sx={{ borderRadius: '8px', height: 36, bgcolor: 'rgba(255,255,255,0.04)' }}>
               {plants.map(p => <MenuItem key={p.id} value={p.id} sx={{ fontSize: '0.82rem' }}>{p.name}</MenuItem>)}
             </Select>
-          </FormControl>
+          </FormControl> */}
 
           <FormControl size="small" sx={{ minWidth: 130 }}>
             <Select value={selectedFinancialYear} onChange={e => dispatch(setFinancialYear(e.target.value))}
@@ -93,12 +122,12 @@ export default function Header() {
             </IconButton>
           </Tooltip>
 
-          <IconButton color="inherit" onClick={e => setAnchorNotif(e.currentTarget)}>
+          {/* <IconButton color="inherit" onClick={e => setAnchorNotif(e.currentTarget)}>
             <Badge badgeContent={unread} color="error"><NotificationsIcon /></Badge>
-          </IconButton>
+          </IconButton> */}
 
           {/* Notifications menu */}
-          <Menu anchorEl={anchorNotif} open={Boolean(anchorNotif)} onClose={() => setAnchorNotif(null)}
+          {/* <Menu anchorEl={anchorNotif} open={Boolean(anchorNotif)} onClose={() => setAnchorNotif(null)}
             transformOrigin={{ horizontal: 'right', vertical: 'top' }}
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             PaperProps={{ sx: { width: 310, mt: 1.5, borderRadius: 2 } }}>
@@ -131,7 +160,7 @@ export default function Header() {
                 </MenuItem>
               ))}
             </Box>
-          </Menu>
+          </Menu> */}
 
           {/* Profile */}
           <Box onClick={e => setAnchorProfile(e.currentTarget)} sx={{
@@ -139,10 +168,16 @@ export default function Header() {
             borderRadius: '24px', cursor: 'pointer',
             '&:hover': { bgcolor: 'action.hover' }
           }}>
-            <Avatar sx={{ width: 32, height: 32, bgcolor: 'warning.main', fontSize: '0.82rem', fontWeight: 'bold' }}>SS</Avatar>
+           <Avatar sx={{ width: 32, height: 32, bgcolor: 'warning.main' }}>
+  {user?.name?.charAt(0) || "U"}
+</Avatar>
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-              <Typography variant="subtitle2" sx={{ lineHeight: 1.2, fontWeight: 700, fontSize: '0.82rem' }}>S. S. Sharma</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>HOD - Operations</Typography>
+              <Typography variant="subtitle2" sx={{ lineHeight: 1.2, fontWeight: 700, fontSize: '0.82rem' }}>
+  {user?.name || "Loading..."}
+</Typography>
+             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+  {user?.role || ""}
+</Typography>
             </Box>
           </Box>
 
@@ -151,9 +186,26 @@ export default function Header() {
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
             PaperProps={{ sx: { width: 200, mt: 1.5, borderRadius: 2 } }}>
             <Box sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
-              <Avatar sx={{ width: 44, height: 44, mx: 'auto', mb: 1, bgcolor: 'primary.main', fontSize: '1rem' }}>SS</Avatar>
-              <Typography variant="subtitle2" fontWeight="bold">S. S. Sharma</Typography>
-              <Typography variant="caption" color="text.secondary">admin@shreeshakti.com</Typography>
+             <Avatar
+  sx={{
+    width: 44,
+    height: 44,
+    mx: 'auto',
+    mb: 1,
+    bgcolor: 'primary.main',
+    fontSize: '1rem'
+  }}
+>
+  {user?.name?.charAt(0) || "U"}
+</Avatar>
+
+<Typography variant="subtitle2" fontWeight="bold">
+  {user?.name || "Loading..."}
+</Typography>
+
+<Typography variant="caption" color="text.secondary">
+  {user?.email || ""}
+</Typography>
             </Box>
             <Divider />
             <MenuItem onClick={() => { navigate('/admin/profile'); setAnchorProfile(null); }} sx={{ gap: 1.5, fontSize: '0.875rem' }}>

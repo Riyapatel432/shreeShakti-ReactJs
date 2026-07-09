@@ -11,8 +11,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import { login } from '../../redux/slices/erpSlice';
-
-const API = 'http://localhost:5000/api';
+import { V_URL } from '../../baseUrl';
 
 function TabPanel({ children, value, index }) {
   return value === index ? <Box sx={{ pt: 3 }}>{children}</Box> : null;
@@ -47,7 +46,7 @@ export default function ProfilePage() {
     setProfileLoading(true);
     try {
     const res = await axios.put(
-  `${API}/admin/update-profile`,
+  `${V_URL}/admin/update-profile`,
   { name, email },
   {
     withCredentials: true,
@@ -75,7 +74,7 @@ export default function ProfilePage() {
     setPasswordLoading(true);
     try {
      const res = await axios.put(
-  `${API}/admin/change-password`,
+  `${V_URL}/admin/change-password`,
   { currentPassword, newPassword },
   {
     withCredentials: true,
