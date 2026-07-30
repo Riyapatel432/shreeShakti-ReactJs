@@ -14,14 +14,13 @@ import {
   InputAdornment,
   Button,
   Typography,
-  Tooltip,
   CircularProgress,
 } from "@mui/material";
 
 import {
   Search as SearchIcon,
-  FileDownload as ExportIcon,
-  PictureAsPdf as PdfIcon,
+  // FileDownload as ExportIcon,
+  // PictureAsPdf as PdfIcon,
   Add as AddIcon,
 } from "@mui/icons-material";
 
@@ -33,7 +32,7 @@ export default function DataTable({
 
   // Backend pagination props
   currentPage = 1,
-  totalPages = 1,
+  // totalPages = 1,
   totalRecords = 0,
   rowsPerPage = 10,
 
@@ -76,36 +75,36 @@ export default function DataTable({
     return 0;
   });
 
-  const exportToCSV = () => {
-    if (!data.length) return;
+  // const exportToCSV = () => {
+  //   if (!data.length) return;
 
-    const headers = columns.map((c) => `"${c.label}"`).join(",");
+  //   const headers = columns.map((c) => `"${c.label}"`).join(",");
 
-    const rows = data.map((row) =>
-      columns
-        .map((col) => {
-          const val = col.render ? "" : row[col.id];
-          return `"${String(val ?? "").replace(/"/g, '""')}"`;
-        })
-        .join(",")
-    );
+  //   const rows = data.map((row) =>
+  //     columns
+  //       .map((col) => {
+  //         const val = col.render ? "" : row[col.id];
+  //         return `"${String(val ?? "").replace(/"/g, '""')}"`;
+  //       })
+  //       .join(",")
+  //   );
 
-    const uri =
-      "data:text/csv;charset=utf-8," +
-      encodeURI([headers, ...rows].join("\n"));
+  //   const uri =
+  //     "data:text/csv;charset=utf-8," +
+  //     encodeURI([headers, ...rows].join("\n"));
 
-    const link = document.createElement("a");
+  //   const link = document.createElement("a");
 
-    link.setAttribute("href", uri);
-    link.setAttribute(
-      "download",
-      `${(title || "export").replace(/\s+/g, "_")}.csv`
-    );
+  //   link.setAttribute("href", uri);
+  //   link.setAttribute(
+  //     "download",
+  //     `${(title || "export").replace(/\s+/g, "_")}.csv`
+  //   );
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // };
 
   return (
     <Paper sx={{ width: "100%", mb: 2, overflow: "hidden" }}>

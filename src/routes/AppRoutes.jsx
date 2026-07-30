@@ -11,16 +11,18 @@
  * ──────────────────────────────────────────────────────────────
  */
 
+import { Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import MainLayout from '../components/layout/MainLayout';
+import LoadingScreen from '../components/common/LoadingScreen';
 import { publicRoutes, userRoutes, adminRoutes } from './routes';
 
 // ─── Route Guard ──────────────────────────────────────────────
 function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, currentUser, authLoading } = useSelector((s) => s.erp);
 
-  if (authLoading) return null;
+  if (authLoading) return <LoadingScreen />;
 
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
 
@@ -36,41 +38,43 @@ function ProtectedRoute({ children, allowedRoles }) {
 // ─── Route Tree ───────────────────────────────────────────────
 export default function AppRoutes() {
   return (
-    <Routes>
-      {/* ── Public (no auth) ── */}
-      {publicRoutes.map(({ path, element }) => (
-        <Route key={path} path={path} element={element} />
-      ))}
-
-      {/* ── User (role: User) ── */}
-      {userRoutes.map(({ path, element }) => (
-        <Route
-          key={path}
-          path={path}
-          element={
-            <ProtectedRoute allowedRoles={['User']}>
-              {element}
-            </ProtectedRoute>
-          }
-        />
-      ))}
-
-      {/* ── Admin (role: Admin) — nested inside MainLayout ── */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        {/* Default redirect to dashboard */}
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-
-        {adminRoutes.map(({ path, element }) => (
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        {/* ── Public (no auth) ── */}
+        {publicRoutes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
         ))}
-      </Route>
-    </Routes>
+
+        {/* ── User (role: User) ── */}
+        {userRoutes.map(({ path, element }) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <ProtectedRoute allowedRoles={['User']}>
+                {element}
+              </ProtectedRoute>
+            }
+          />
+        ))}
+
+        {/* ── Admin (role: Admin) — nested inside MainLayout ── */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Default redirect to dashboard */}
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+
+          {adminRoutes.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }

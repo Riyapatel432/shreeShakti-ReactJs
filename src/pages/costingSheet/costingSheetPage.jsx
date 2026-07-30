@@ -15,26 +15,13 @@ import {
   DialogActions,
   Button,
   MenuItem,
-  InputAdornment,
   Tooltip,
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
-import { DatePicker } from "@mui/x-date-pickers";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs";
 import {
   Edit,
   Delete,
   NavigateNext as NavIcon,
-  Person,
-  Business,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  Receipt,
-  LocationOn,
-  LocationCity,
-  Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
@@ -60,7 +47,7 @@ const VALIDATION = {
 };
 
 
-export default function costingSheetPage() {
+export default function CostingSheetPage() {
 
   const dispatch = useDispatch();
 
@@ -133,7 +120,7 @@ useEffect(() => {
      status:true
     })
   );
-}, [dispatch, status]);
+}, [dispatch]);
 
 useEffect(() => {
   dispatch(
@@ -151,7 +138,7 @@ useEffect(() => {
       status:true
     })
   );
-}, [dispatch, status]);
+}, [dispatch]);
 
 useEffect(() => {
   dispatch(
@@ -163,9 +150,9 @@ useEffect(() => {
   );
 }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [debouncedSearch]);
+// useEffect(() => {
+//   setCurrentPage(1);
+// }, [debouncedSearch]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
@@ -181,14 +168,6 @@ useEffect(() => {
   const validateField = useCallback((fieldName, value) => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
-
-  const FIELD_LABELS = {
-  product_category: "Product Category",
-  product: "Product",
-  moc:"MOC",
-  current_price: "Current Price",
-  effective_date: "Effective Date",
-};
 const trimmed =
   typeof value === "string"
     ? value.trim()
@@ -317,16 +296,16 @@ if (field === "product") {
 };
 
   // ================= FIELD BLUR HANDLER =================
-  const handleBlur = (fieldName) => {
-    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+  // const handleBlur = (fieldName) => {
+  //   setTouched((prev) => ({ ...prev, [fieldName]: true }));
 
-    // Trim on blur
-    const trimmed = (form[fieldName] || "").trim();
-    setForm((prev) => ({ ...prev, [fieldName]: trimmed }));
+  //   // Trim on blur
+  //   const trimmed = (form[fieldName] || "").trim();
+  //   setForm((prev) => ({ ...prev, [fieldName]: trimmed }));
 
-    const error = validateField(fieldName, trimmed);
-    setErrors((prev) => ({ ...prev, [fieldName]: error }));
-  };
+  //   const error = validateField(fieldName, trimmed);
+  //   setErrors((prev) => ({ ...prev, [fieldName]: error }));
+  // };
 
   // ================= FIELD PROPS HELPER =================
   const fieldProps = (name) => ({
@@ -345,146 +324,128 @@ if (field === "product") {
   };
 
   // ================= OPEN EDIT =================
-const handleEdit = (row) => {
-  setIsEdit(true);
-  setEditingId(row._id);
+  const handleEdit = (row) => {
+    setIsEdit(true);
+    setEditingId(row._id);
 
-  setForm({
-    product_category: row.product_category?._id || "",
-    product: row.product?._id || "",
-    moc: row.moc?._id || row.product?.moc?._id || "",
-    dimensions: row.dimensions || {
-      od: 0,
-      id: 0,
-      l: 0,
-      w: 0,
-      thk: 0,
-      nos: 0,
-      std: 0,
-    },
-    qty: row.qty || "",
-    rate: row.rate || "",
-    amount: row.amount || "",
-    status: row.status ?? true,
-  });
+    setForm({
+      product_category: row.product_category?._id || "",
+      product: row.product?._id || "",
+      moc: row.moc?._id || row.product?.moc?._id || "",
+      dimensions: row.dimensions || {
+        od: 0,
+        id: 0,
+        l: 0,
+        w: 0,
+        thk: 0,
+        nos: 0,
+        std: 0,
+      },
+      qty: row.qty || "",
+      rate: row.rate || "",
+      amount: row.amount || "",
+      status: row.status ?? true,
+    });
 
-  setErrors({});
-  setTouched({});
-  setModalOpen(true);
-};
-const calculateQty = (categoryName, d) => {
+    setErrors({});
+    setTouched({});
+    setModalOpen(true);
+  };
+
+  const calculateQty = (categoryName, d) => {
     const {
-        od = 0,
-        id = 0,
-        l = 0,
-        w = 0,
-        thk = 0,
-        nos = 1,
-    } = d;
+      od = 0,
+      id = 0,
+      l = 0,
+      w = 0,
+      thk = 0,
+      nos = 1,
+    } = d || {};
 
-    switch ((categoryName || "").toLowerCase()) {
+    switch ((categoryName || "").trim().toLowerCase()) {
 
-        case "pipe":
-        case "tube":
-            return (
-                ((od - thk) * thk *  l * nos) /
-                1000
-            );
+      // Tube & Pipe -> Running Meter
+      case "tube":
+      case "pipe":
+        return (l * nos) / 1000;
 
-        case "plate":
-        case "sheet":
-            return (
-                (l * w * thk * 7.85 * nos) /
-                1000000
-            );
+      // Plate / Sheet -> Weight
+      case "plate":
+      case "sheet":
+        return (l * w * thk * 7.85 * nos) / 1000000;
 
-        case "round bar":
-        case "shaft":
-            return (
-                (od * od * 0.006165 * l * nos) /
-                1000
-            );
+      // Round Bar / Shaft -> Weight
+      case "round bar":
+      case "shaft":
+        return (od * od * 0.006165 * l * nos) / 1000;
 
-        case "ring":
-        case "flange":
-            return (
-                ((od * od - id * id) *
-                    0.006165 *
-                    thk *
-                    nos) /
-                1000
-            );
+      // Ring / Flange -> Weight
+      case "ring":
+      case "flange":
+        return (
+          ((od * od - id * id) * 0.006165 * thk * nos) / 1000
+        );
 
-        default:
-            return 0;
+      default:
+        return 0;
     }
-};
+  };
 
-useEffect(() => {
-  if (!form.product_category) return;
+  const selectedCategoryName =
+    productCategories.find((p) => p._id === form.product_category)?.name || "";
 
-  const categoryName =
-    productCategories.find(
-      (item) => item._id === form.product_category
-    )?.name || "";
+  const calculatedQty = calculateQty(selectedCategoryName, form.dimensions);
+  const computedQty =
+    calculatedQty > 0
+      ? calculatedQty.toFixed(3)
+      : form.qty
+      ? String(form.qty)
+      : "";
+  const computedAmount =
+    calculatedQty > 0
+      ? (calculatedQty * Number(form.rate || 0)).toFixed(2)
+      : form.rate && form.qty
+      ? (Number(form.qty) * Number(form.rate)).toFixed(2)
+      : form.amount
+      ? String(form.amount)
+      : "";
 
-  const qty = calculateQty(
-    categoryName,
-    form.dimensions || {}
-  );
+  const handleDimensionChange = (key, value) => {
+    setForm((prev) => ({
+      ...prev,
+      dimensions: {
+        ...prev.dimensions,
+        [key]: Number(value),
+      },
+    }));
+  };
 
-  setForm((prev) => ({
-    ...prev,
-    qty: qty.toFixed(3),
-    amount: (
-      qty *
-      Number(prev.rate || 0)
-    ).toFixed(2),
-  }));
-}, [
-  form.product_category,
-  form.dimensions,
-  form.rate,
-  productCategories,
-]);
-
-const handleDimensionChange = (key, value) => {
-  setForm((prev) => ({
-    ...prev,
-    dimensions: {
-      ...prev.dimensions,
-      [key]: Number(value),
-    },
-  }));
-};
   // ================= SUBMIT =================
   const handleSubmit = async () => {
-console.log("in submit=======>");
-    // Client-side validation gate
     if (!validateForm()) return;
-console.log("after validation=======>");
 
     setServerError("");
     setFormLoading(true);
 
+    const submitData = {
+      ...form,
+      qty: computedQty,
+      amount: computedAmount,
+    };
+
     try {
       let res;
-console.log("ressss=======>");
 
       if (isEdit) {
-console.log("in if block=======>");
-
-        res = await dispatch(updateCostingSheet({ id: editingId, data: form }));
+        res = await dispatch(updateCostingSheet({ id: editingId, data: submitData }));
       } else {
-console.log("in else block=======>");
-
-        res = await dispatch(addCostingSheet(form));
+        res = await dispatch(addCostingSheet(submitData));
       }
 
       setFormLoading(false);
 
       // Check if the action was fulfilled
-     if (res.meta?.requestStatus === "fulfilled") {
+      if (res.meta?.requestStatus === "fulfilled") {
 console.log("in fulfilled=======>");
 
  dispatch(
@@ -744,6 +705,7 @@ const formatDimensions = (dimensions = {}) => {
   onChange={(e) =>
     handleFieldChange("product_category", e.target.value)
   }
+  {...fieldProps("product_category")}
 >
   <MenuItem value="">Select Product Category</MenuItem>
 
@@ -764,6 +726,7 @@ const formatDimensions = (dimensions = {}) => {
   onChange={(e) =>
     handleFieldChange("product", e.target.value)
   }
+  {...fieldProps("product")}
 >
   <MenuItem value="">Select Product</MenuItem>
 
@@ -817,7 +780,7 @@ const formatDimensions = (dimensions = {}) => {
 <TextField
   fullWidth
   label="Qty (Kg)"
-  value={form.qty}
+  value={computedQty}
   disabled
   slotProps={{
     inputLabel: {
@@ -839,7 +802,6 @@ const formatDimensions = (dimensions = {}) => {
       setForm((prev) => ({
         ...prev,
         rate,
-        amount: Number(prev.qty || 0) * Number(rate || 0),
       }));
     }}
     slotProps={{
@@ -856,7 +818,7 @@ const formatDimensions = (dimensions = {}) => {
 <TextField
   fullWidth
   label="Amount"
-  value={form.amount}
+  value={computedAmount}
   disabled
   slotProps={{
     inputLabel: {

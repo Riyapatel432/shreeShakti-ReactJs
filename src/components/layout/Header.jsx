@@ -2,22 +2,22 @@ import { useState,useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
-  AppBar, Toolbar, IconButton, Typography, InputBase, Badge,
+  AppBar, Toolbar, IconButton, Typography, InputBase,
   MenuItem, Menu, Box, FormControl, Select, Divider, Tooltip,
-  Avatar, Paper, Button
+  Avatar, Paper
 } from '@mui/material';
 import {
-  Menu as MenuIcon, Search as SearchIcon, Notifications as NotificationsIcon,
+  Menu as MenuIcon, Search as SearchIcon,
   DarkMode as DarkModeIcon, LightMode as LightModeIcon,
-  Business as BusinessIcon, CalendarToday as CalendarIcon,
+ CalendarToday as CalendarIcon,
   Person as PersonIcon, Settings as SettingsIcon, ExitToApp as LogoutIcon,
-  Engineering as EngineeringIcon
+
 } from '@mui/icons-material';
 import {
-  toggleThemeMode, setSidebarOpen, setFinancialYear, setPlant, markAllNotificationsRead, logout
+  toggleThemeMode, setSidebarOpen, setFinancialYear, logout
 } from '../../redux/slices/erpSlice';
-import { financialYears, plants } from '../../data/mockData';
-import logo from "../../assets/Shree-shakti-logo.png";
+import { financialYears } from '../../data/mockData';
+// import logo from "../../assets/Shree-shakti-logo.png";
 import lightLogo from "../../assets/Shree-shakti-logo.png";
 import darkLogo from "../../assets/Shree-shakti-logo-white.png";
 import axios from "axios";
@@ -26,10 +26,10 @@ import { V_URL } from "../../baseUrl";
 export default function Header() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { themeMode, sidebarOpen, selectedFinancialYear, selectedPlant, notifications } = useSelector(s => s.erp);
+  const { themeMode, sidebarOpen, selectedFinancialYear } = useSelector(s => s.erp);
   const [anchorProfile, setAnchorProfile] = useState(null);
-  const [anchorNotif, setAnchorNotif] = useState(null);
-  const unread = notifications.filter(n => !n.read).length;
+  // const [anchorNotif, setAnchorNotif] = useState(null);
+  // const unread = notifications.filter(n => !n.read).length;
   const [user, setUser] = useState(null);
 
 useEffect(() => {

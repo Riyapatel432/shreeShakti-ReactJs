@@ -15,7 +15,6 @@ import {
   DialogActions,
   Button,
   MenuItem,
-  InputAdornment,
   Tooltip,
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
@@ -23,19 +22,11 @@ import {
   Edit,
   Delete,
   NavigateNext as NavIcon,
-  Person,
-  Business,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  Receipt,
-  LocationOn,
-  LocationCity,
-  Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
 import FormModal from '../../components/common/FormModal';
-import countries from "../../city.json";
+
 import {
   fetchPrice,
   addPrice,
@@ -81,7 +72,7 @@ const [limit, setLimit] = useState(10);
 const [search, setSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-const [cities, setCities] = useState([]);
+
   const [successMessage, setSuccessMessage] = useState("");
 const initialForm = {
   product: "",
@@ -140,9 +131,7 @@ useEffect(() => {
   );
 }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [debouncedSearch]);
+
 
 useEffect(() => {
   const handler = setTimeout(() => {
@@ -159,12 +148,7 @@ useEffect(() => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
 
-  const FIELD_LABELS = {
-  product_category: "Product Category",
-  product: "Product",
-  current_price: "Current Price",
-  effective_date: "Effective Date",
-};
+
 const trimmed =
   typeof value === "string"
     ? value.trim()
@@ -243,17 +227,6 @@ const handleFieldChange = (fieldName, rawValue) => {
   }
 };
 
-  // ================= FIELD BLUR HANDLER =================
-  const handleBlur = (fieldName) => {
-    setTouched((prev) => ({ ...prev, [fieldName]: true }));
-
-    // Trim on blur
-    const trimmed = (form[fieldName] || "").trim();
-    setForm((prev) => ({ ...prev, [fieldName]: trimmed }));
-
-    const error = validateField(fieldName, trimmed);
-    setErrors((prev) => ({ ...prev, [fieldName]: error }));
-  };
 
   // ================= FIELD PROPS HELPER =================
   const fieldProps = (name) => ({
@@ -285,11 +258,7 @@ const handleFieldChange = (fieldName, rawValue) => {
     : "",
   status: row.status ?? true,
 });
-    const selectedState = states.find(
-  (s) => s.name === row.state
-);
 
-setCities(selectedState?.cities || []);
     setErrors({});
     setTouched({});
     setModalOpen(true);
@@ -454,11 +423,7 @@ const handleDeleteConfirm = async () => {
     ),
   },
 ];
-  const india = countries.find(
-  (country) => country.name === "India"
-);
 
-const states = india?.states || [];
   // ================= UI =================
   return (
     <Box>

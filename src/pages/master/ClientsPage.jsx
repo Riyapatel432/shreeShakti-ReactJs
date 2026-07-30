@@ -28,15 +28,13 @@ import {
   Email as EmailIcon,
   Phone as PhoneIcon,
   Receipt,
-  LocationOn,
-  LocationCity,
   Home,
-  Map as MapIcon
+  // Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
 import FormModal from '../../components/common/FormModal';
-import countries from "../../city.json";
+import countries from "../../data/india_states_cities.json";
 import {
   fetchClients,
   addClient,
@@ -147,9 +145,9 @@ useEffect(() => {
   );
 }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [debouncedSearch]);
+// useEffect(() => {
+//   setCurrentPage(1);
+// }, [debouncedSearch]);
 
 useEffect(() => {
   const handler = setTimeout(() => {

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * routes.jsx
  * ──────────────────────────────────────────────────────────────
@@ -15,46 +16,56 @@
  * ──────────────────────────────────────────────────────────────
  */
 
-import ComingSoonPage from '../pages/ComingSoonPage';
-import Dashboard      from '../pages/Dashboard';
+import { lazy, Suspense } from 'react';
+import LoadingScreen from '../components/common/LoadingScreen';
 
 // Auth
 import LoginPage     from '../pages/auth/LoginPage';
 import UserLoginPage from '../pages/auth/UserLoginPage';
 
+// Non-critical pages (lazy-loaded)
+const ComingSoonPage = lazy(() => import('../pages/ComingSoonPage'));
+const Dashboard      = lazy(() => import('../pages/Dashboard'));
+
 // Admin
-import ProfilePage from '../pages/admin/ProfilePage';
+const ProfilePage = lazy(() => import('../pages/admin/ProfilePage'));
 
 // User
-import UserDashboard from '../pages/user/UserDashboard';
+const UserDashboard = lazy(() => import('../pages/user/UserDashboard'));
 
 // Master
-import ProjectsPage  from '../pages/master/ProjectsPage';
-import QuotationsPage   from '../pages/quotation/QuotationsPage';
-import ClientsPage   from '../pages/master/ClientsPage';
-import ProductCategoryPage from '../pages/master/ProductCategoryPage';
-import ProductsPage from '../pages/product/ProductsPage';
-import PricePage from '../pages/price/PricePage';
-import UnitsPage from '../pages/master/UnitsPage';
-import MocsPage from '../pages/master/MocsPage';
-import CostingSheetPage from '../pages/costingSheet/costingSheetPage';
+const ProjectsPage  = lazy(() => import('../pages/master/ProjectsPage'));
+const QuotationsPage   = lazy(() => import('../pages/quotation/QuotationsPage'));
+const ClientsPage   = lazy(() => import('../pages/master/ClientsPage'));
+const ProductCategoryPage = lazy(() => import('../pages/master/ProductCategoryPage'));
+const ProductsPage = lazy(() => import('../pages/product/ProductsPage'));
+const PricePage = lazy(() => import('../pages/price/PricePage'));
+const UnitsPage = lazy(() => import('../pages/master/UnitsPage'));
+const MocsPage = lazy(() => import('../pages/master/MocsPage'));
+const CostingSheetPage = lazy(() => import('../pages/costingSheet/costingSheetPage'));
+
 // Purchase
-import PurchaseOrderPage from '../pages/purchase/PurchaseOrderPage';
+const PurchaseOrderPage = lazy(() => import('../pages/purchase/PurchaseOrderPage'));
 
 // Production
-import ProductionKanbanPage from '../pages/production/ProductionKanbanPage';
+const ProductionKanbanPage = lazy(() => import('../pages/production/ProductionKanbanPage'));
 
 // Quality
-import IncomingInspectionPage from '../pages/quality/IncomingInspectionPage';
+const IncomingInspectionPage = lazy(() => import('../pages/quality/IncomingInspectionPage'));
 
 // HR
-import EmployeesPage from '../pages/hr/EmployeesPage';
+const EmployeesPage = lazy(() => import('../pages/hr/EmployeesPage'));
 
 // Settings
-import AuditLogsPage from '../pages/settings/AuditLogsPage';
+const AuditLogsPage = lazy(() => import('../pages/settings/AuditLogsPage'));
 
 // ─── Helper: Coming Soon shorthand ───────────────────────────
-const cs = (module, page) => <ComingSoonPage module={module} page={page} />;
+const cs = (module, page) => (
+  <Suspense fallback={<LoadingScreen />}>
+    <ComingSoonPage module={module} page={page} />
+  </Suspense>
+);
+
 
 // ─── Public Routes ────────────────────────────────────────────
 export const publicRoutes = [

@@ -15,7 +15,6 @@ import {
   DialogActions,
   Button,
   MenuItem,
-  InputAdornment,
   Tooltip,
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
@@ -27,14 +26,14 @@ import {
   Edit,
   Delete,
   NavigateNext as NavIcon,
-  Person,
-  Business,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  Receipt,
-  LocationOn,
-  LocationCity,
-  Map as MapIcon
+  // Person,
+  // Business,
+  // Email as EmailIcon,
+  // Phone as PhoneIcon,
+  // Receipt,
+  // LocationOn,
+  // LocationCity,
+  // Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
@@ -139,9 +138,9 @@ useEffect(() => {
   );
 }, [dispatch, status]);
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [debouncedSearch]);
+// useEffect(() => {
+//   setCurrentPage(1);
+// }, [debouncedSearch]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
@@ -158,13 +157,13 @@ useEffect(() => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
 
-  const FIELD_LABELS = {
-  product_category: "Product Category",
-  product: "Product",
-  moc:"MOC",
-  current_price: "Current Price",
-  effective_date: "Effective Date",
-};
+//   const FIELD_LABELS = {
+//   product_category: "Product Category",
+//   product: "Product",
+//   moc:"MOC",
+//   current_price: "Current Price",
+//   effective_date: "Effective Date",
+// };
 const trimmed =
   typeof value === "string"
     ? value.trim()
@@ -250,16 +249,16 @@ const handleFieldChange = (fieldName, rawValue) => {
 };
 
   // ================= FIELD BLUR HANDLER =================
-  const handleBlur = (fieldName) => {
-    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+  // const handleBlur = (fieldName) => {
+  //   setTouched((prev) => ({ ...prev, [fieldName]: true }));
 
-    // Trim on blur
-    const trimmed = (form[fieldName] || "").trim();
-    setForm((prev) => ({ ...prev, [fieldName]: trimmed }));
+  //   // Trim on blur
+  //   const trimmed = (form[fieldName] || "").trim();
+  //   setForm((prev) => ({ ...prev, [fieldName]: trimmed }));
 
-    const error = validateField(fieldName, trimmed);
-    setErrors((prev) => ({ ...prev, [fieldName]: error }));
-  };
+  //   const error = validateField(fieldName, trimmed);
+  //   setErrors((prev) => ({ ...prev, [fieldName]: error }));
+  // };
 
   // ================= FIELD PROPS HELPER =================
   const fieldProps = (name) => ({
@@ -685,9 +684,9 @@ const handleDeleteConfirm = async () => {
 
       {/* DELETE CONFIRM */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
-        <DialogTitle>Delete Product Category</DialogTitle>
+        <DialogTitle>Delete Product Price</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this Product Category?
+          Are you sure you want to delete this Product Price?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>

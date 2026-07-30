@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -6,9 +6,8 @@ import {
   Box, Typography, Divider, Tooltip, useMediaQuery, useTheme
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon, Storage as MasterIcon, ShoppingCart as PurchaseIcon, PriceCheck as PriceIcon, CurrencyRupee as RupeeIcon,
-  Inventory as InventoryIcon, PrecisionManufacturing as ProductionIcon,
-  FactCheck as QCIcon, Transform as IssueIcon, People as HRIcon,
+  Dashboard as DashboardIcon, Storage as MasterIcon, CurrencyRupee as RupeeIcon,
+  Inventory as InventoryIcon,
   Assessment as ReportsIcon, SettingsApplications as SettingsIcon,
   ExpandLess, ExpandMore
 } from '@mui/icons-material';
@@ -86,16 +85,17 @@ export default function Sidebar() {
   const isDark = theme.palette.mode === 'dark';
   const [expanded, setExpanded] = useState({});
 
-  useEffect(() => {
-    const active = menuItems.find(item => item.sub?.some(s => location.pathname.startsWith(s.path)));
-    if (active) setExpanded(prev => ({ ...prev, [active.title]: true }));
-  }, [location.pathname]);
-
-  const toggleExpand = (title) => setExpanded(prev => ({ ...prev, [title]: !prev[title] }));
+  const toggleExpand = (title, defaultExpanded) => {
+    setExpanded(prev => ({
+      ...prev,
+      [title]: !(prev[title] ?? defaultExpanded)
+    }));
+  };
 
   const navItem = (item) => {
+    const isSubActive = Boolean(item.sub?.some(s => location.pathname.startsWith(s.path)));
     const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-    const isExp = expanded[item.title];
+    const isExp = expanded[item.title] ?? isSubActive;
     const hasSub = Boolean(item.sub);
 
     const activeColor = theme.palette.primary.main;
@@ -126,7 +126,7 @@ export default function Sidebar() {
 
     return (
       <Box key={item.title}>
-        <ListItemButton onClick={() => { hasSub ? toggleExpand(item.title) : navigate(item.path); }} sx={{
+        <ListItemButton onClick={() => { hasSub ? toggleExpand(item.title, isSubActive) : navigate(item.path); }} sx={{
           py: 1.2, px: 2, mb: 0.5, borderRadius: '8px',
           color: isActive ? activeColor : inactiveColor,
           bgcolor: isActive ? activeBg : 'transparent',

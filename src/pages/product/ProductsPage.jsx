@@ -15,7 +15,7 @@ import {
   DialogActions,
   Button,
   MenuItem,
-  InputAdornment,
+  // InputAdornment,
   Tooltip,
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
@@ -23,19 +23,11 @@ import {
   Edit,
   Delete,
   NavigateNext as NavIcon,
-  Person,
-  Business,
-  Email as EmailIcon,
-  Phone as PhoneIcon,
-  Receipt,
-  LocationOn,
-  LocationCity,
-  Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
 import FormModal from '../../components/common/FormModal';
-import countries from "../../city.json";
+
 import {
   fetchProduct,
   addProduct,
@@ -97,7 +89,7 @@ const [limit, setLimit] = useState(10);
 const [search, setSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-const [cities, setCities] = useState([]);
+
   const [successMessage, setSuccessMessage] = useState("");
  const initialForm = {
   name: "",
@@ -139,9 +131,9 @@ useEffect(() => {
   );
 }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [debouncedSearch]);
+// useEffect(() => {
+//   setCurrentPage(1);
+// }, [debouncedSearch]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
@@ -485,11 +477,7 @@ const columns = [
   },
 ];
 
-  const india = countries.find(
-  (country) => country.name === "India"
-);
 
-const states = india?.states || [];
   // ================= UI =================
   return (
     <Box>

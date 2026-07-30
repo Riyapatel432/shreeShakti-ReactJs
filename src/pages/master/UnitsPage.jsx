@@ -90,9 +90,9 @@ useEffect(() => {
   );
 }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  setCurrentPage(1);
-}, [debouncedSearch]);
+// useEffect(() => {
+//   setCurrentPage(1);
+// }, [debouncedSearch]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
