@@ -1,70 +1,159 @@
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Box, Typography, Breadcrumbs, Link, Chip, Grid, TextField, MenuItem } from '@mui/material';
-import { NavigateNext as NavIcon } from '@mui/icons-material';
-import DataTable from '../../components/common/DataTable';
-import FormModal from '../../components/common/FormModal';
-import { addPurchaseOrder } from '../../redux/slices/erpSlice';
-
-const statusColors = { Released: 'success', 'Pending Delivery': 'primary', Draft: 'default', 'Under Review': 'warning' };
-const approvalColors = { Approved: 'success', 'Pending HOD': 'warning', 'Pending MD': 'error' };
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPurchaseOrders, deletePurchaseOrder, updatePurchaseOrderStatus } from "../../redux/slices/purchaseSlice";
+import { fetchVendors } from "../../redux/slices/purchaseSlice";
+import { getMaterials } from "../../redux/slices/materialSlice";
+import DataTable from "../../components/common/DataTable";
+import PurchaseOrderFormModal from "./PurchaseOrderFormModal";
+import GoodsReceiptModal from "./GoodsReceiptModal";
+import { Box, Typography, Breadcrumbs, Link, Tooltip, IconButton, Chip } from "@mui/material";
+import { NavigateNext as NavIcon, Edit, Delete, CheckCircle, Inventory } from "@mui/icons-material";
+import Swal from "sweetalert2";
 
 export default function PurchaseOrderPage() {
   const dispatch = useDispatch();
-  const { purchaseOrders, vendors, projects } = useSelector(s => s.erp);
+  const { purchaseOrders = [], loading = false } = useSelector((state) => state.purchase || {});
+
   const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState({ vendor: '', project: '', totalAmount: '', itemsCount: 1 });
+  const [selectedPO, setSelectedPO] = useState(null);
+  
+  const [grnModalOpen, setGrnModalOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchPurchaseOrders());
+    dispatch(fetchVendors({ limit: 100 }));
+    dispatch(getMaterials({ limit: 100 }));
+  }, [dispatch]);
+
+  const handleEdit = (po) => {
+    if (["Partially Received", "Received"].includes(po.status)) {
+      Swal.fire("Not Allowed", "Cannot edit a PO that has already been partially or fully received.", "error");
+      return;
+    }
+    setSelectedPO(po);
+    setModalOpen(true);
+  };
+
+  const handleReceiveGoods = (po) => {
+    if (po.status === "Received" || po.status === "Cancelled") {
+       Swal.fire("Not Allowed", `Cannot receive goods for a ${po.status} PO.`, "error");
+       return;
+    }
+    if (po.status === "Draft") {
+       Swal.fire("Not Allowed", "Cannot receive goods for a Draft PO. Please mark it as Sent first.", "error");
+       return;
+    }
+    setSelectedPO(po);
+    setGrnModalOpen(true);
+  };
+
+  const handleMarkSent = (id) => {
+    Swal.fire({
+      title: "Mark as Sent?",
+      text: "This will approve and mark the PO as sent to the vendor.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Mark Sent"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(updatePurchaseOrderStatus({ id, status: "Sent" })).then(() => {
+           dispatch(fetchPurchaseOrders());
+        });
+      }
+    });
+  };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(deletePurchaseOrder(id));
+      }
+    });
+  };
 
   const columns = [
-    { id: 'id', label: 'PO Number', width: 140 },
-    { id: 'reqNo', label: 'Req. No.', width: 140 },
-    { id: 'date', label: 'Date' },
-    { id: 'vendor', label: 'Vendor' },
-    { id: 'project', label: 'Project' },
-    { id: 'totalAmount', label: 'PO Value (₹)', render: (row) => `₹ ${(row.totalAmount / 100000).toFixed(2)} L` },
-    { id: 'itemsCount', label: 'Items', width: 70 },
-    { id: 'status', label: 'PO Status', render: (row) => <Chip label={row.status} size="small" color={statusColors[row.status] || 'default'} sx={{ fontWeight: 600 }} /> },
-    { id: 'approvalStatus', label: 'Approval', render: (row) => <Chip label={row.approvalStatus} size="small" color={approvalColors[row.approvalStatus] || 'default'} variant="outlined" /> },
+    { id: "poNumber", label: "PO Number" },
+    { id: "vendor", label: "Vendor", render: (row) => row.vendor?.company_name || "-" },
+    { id: "orderDate", label: "Order Date", render: (row) => new Date(row.orderDate).toLocaleDateString() },
+    { id: "grandTotal", label: "Total (₹)", render: (row) => `₹${row.grandTotal?.toFixed(2) || 0}` },
+    {
+      id: "status",
+      label: "Status",
+      render: (row) => {
+        const color = row.status === "Received" ? "success" 
+                    : row.status === "Partially Received" ? "warning"
+                    : row.status === "Sent" ? "info"
+                    : row.status === "Cancelled" ? "error" : "default";
+        return <Chip label={row.status} size="small" color={color} variant="outlined" />;
+      }
+    },
+    {
+      id: "actions",
+      label: "Actions",
+      render: (row) => (
+        <>
+          {row.status === "Draft" && (
+            <Tooltip title="Mark as Sent / Approve">
+              <IconButton onClick={() => handleMarkSent(row._id)} color="success" size="small"><CheckCircle fontSize="small" /></IconButton>
+            </Tooltip>
+          )}
+          {["Sent", "Partially Received"].includes(row.status) && (
+             <Tooltip title="Receive Goods (GRN)">
+               <IconButton onClick={() => handleReceiveGoods(row)} color="secondary" size="small"><Inventory fontSize="small" /></IconButton>
+             </Tooltip>
+          )}
+          <Tooltip title="Edit">
+            <IconButton onClick={() => handleEdit(row)} color="primary" size="small"><Edit fontSize="small" /></IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton onClick={() => handleDelete(row._id)} color="error" size="small"><Delete fontSize="small" /></IconButton>
+          </Tooltip>
+        </>
+      )
+    }
   ];
-
-  const handleSubmit = () => {
-    const today = new Date().toISOString().split('T')[0];
-    dispatch(addPurchaseOrder({
-      id: `PO-2026-00${purchaseOrders.length + 46}`,
-      reqNo: `PR-2026-00${purchaseOrders.length + 121}`,
-      date: today, vendor: form.vendor, project: form.project,
-      totalAmount: Number(form.totalAmount), status: 'Draft',
-      approvalStatus: 'Pending HOD', itemsCount: Number(form.itemsCount)
-    }));
-    setModalOpen(false);
-    setForm({ vendor: '', project: '', totalAmount: '', itemsCount: 1 });
-  };
 
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={800} sx={{ mb: 0.5 }}>Purchase Orders</Typography>
+        <Typography variant="h4" fontWeight={800}>Purchase Orders</Typography>
         <Breadcrumbs separator={<NavIcon fontSize="small" />}>
-          <Link underline="hover" color="inherit" href="#" sx={{ fontSize: '0.85rem' }}>Purchase Management</Link>
-          <Typography color="warning.main" sx={{ fontSize: '0.85rem', fontWeight: 600 }}>Purchase Order</Typography>
+          <Link underline="hover">Purchase</Link>
+          <Typography color="warning.main">Orders</Typography>
         </Breadcrumbs>
       </Box>
 
-      <DataTable title="Purchase Order Register" columns={columns} data={purchaseOrders}
-        searchPlaceholder="Search PO number, vendor..." onAddClick={() => setModalOpen(true)} addLabel="New PO" />
+      <DataTable
+        title="Purchase Orders"
+        columns={columns}
+        data={purchaseOrders || []}
+        loading={loading}
+        onAddClick={() => { setSelectedPO(null); setModalOpen(true); }}
+        addLabel="New Purchase Order"
+        hidePagination={true}
+      />
 
-      <FormModal open={modalOpen} onClose={() => setModalOpen(false)} title="Create Purchase Order" onSubmit={handleSubmit} submitLabel="Create PO">
-        <Grid container spacing={2}>
-          <Grid item xs={12}><TextField select fullWidth label="Vendor" value={form.vendor} onChange={e => setForm({ ...form, vendor: e.target.value })} required>
-            {vendors.map(v => <MenuItem key={v.id} value={v.name}>{v.name}</MenuItem>)}
-          </TextField></Grid>
-          <Grid item xs={12}><TextField select fullWidth label="Project" value={form.project} onChange={e => setForm({ ...form, project: e.target.value })} required>
-            {projects.map(p => <MenuItem key={p.id} value={p.name}>{p.name}</MenuItem>)}
-          </TextField></Grid>
-          <Grid item xs={12} sm={6}><TextField fullWidth type="number" label="Total Amount (₹)" value={form.totalAmount} onChange={e => setForm({ ...form, totalAmount: e.target.value })} /></Grid>
-          <Grid item xs={12} sm={6}><TextField fullWidth type="number" label="No. of Line Items" value={form.itemsCount} onChange={e => setForm({ ...form, itemsCount: e.target.value })} inputProps={{ min: 1 }} /></Grid>
-        </Grid>
-      </FormModal>
+      {modalOpen && (
+        <PurchaseOrderFormModal
+          open={modalOpen}
+          onClose={() => { setModalOpen(false); dispatch(fetchPurchaseOrders()); }}
+          po={selectedPO}
+        />
+      )}
+
+      {grnModalOpen && (
+        <GoodsReceiptModal
+          open={grnModalOpen}
+          onClose={() => { setGrnModalOpen(false); dispatch(fetchPurchaseOrders()); }}
+          po={selectedPO}
+        />
+      )}
     </Box>
   );
 }

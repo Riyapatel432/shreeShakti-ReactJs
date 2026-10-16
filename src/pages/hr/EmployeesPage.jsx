@@ -58,15 +58,15 @@ export default function EmployeesPage() {
 
       <FormModal open={modalOpen} onClose={() => setModalOpen(false)} title="Register New Employee" onSubmit={handleSubmit} submitLabel="Register Employee">
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={7}><TextField fullWidth label="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></Grid>
-          <Grid item xs={12} sm={5}><TextField fullWidth label="Designation / Trade" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} /></Grid>
-          <Grid item xs={12} sm={6}><TextField select fullWidth label="Department" value={form.dept} onChange={e => setForm({ ...form, dept: e.target.value })}>
+          <Grid xs={12} sm={7}><TextField fullWidth label="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></Grid>
+          <Grid xs={12} sm={5}><TextField fullWidth label="Designation / Trade" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} /></Grid>
+          <Grid xs={12} sm={6}><TextField select fullWidth label="Department" value={form.dept} onChange={e => setForm({ ...form, dept: e.target.value })}>
             {depts.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
           </TextField></Grid>
-          <Grid item xs={12} sm={6}><TextField select fullWidth label="Skill Category" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+          <Grid xs={12} sm={6}><TextField select fullWidth label="Skill Category" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
             {categories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
           </TextField></Grid>
-          <Grid item xs={12} sm={6}><TextField select fullWidth label="Status" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+          <Grid xs={12} sm={6}><TextField select fullWidth label="Status" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
             {['Present', 'On Leave', 'Absent'].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
           </TextField></Grid>
         </Grid>

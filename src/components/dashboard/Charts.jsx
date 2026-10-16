@@ -26,7 +26,7 @@ export default function Charts() {
   return (
     <Grid container spacing={3}>
       {/* Monthly Production Trend */}
-      <Grid item xs={12} md={6}>
+      <Grid xs={12} md={6}>
         <Card sx={{ height: 380 }}>
           <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>Monthly Production Trend</Typography>
@@ -52,7 +52,7 @@ export default function Charts() {
       </Grid>
 
       {/* Purchase Cost Analysis */}
-      <Grid item xs={12} md={6}>
+      <Grid xs={12} md={6}>
         <Card sx={{ height: 380 }}>
           <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>Purchase Cost Analysis</Typography>
@@ -88,7 +88,7 @@ export default function Charts() {
       </Grid>
 
       {/* Material Consumption Bar Chart */}
-      <Grid item xs={12} md={7}>
+      <Grid xs={12} md={7}>
         <Card sx={{ height: 360 }}>
           <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>Material Consumption</Typography>
@@ -113,7 +113,7 @@ export default function Charts() {
       </Grid>
 
       {/* Department Efficiency Pie */}
-      <Grid item xs={12} md={5}>
+      <Grid xs={12} md={5}>
         <Card sx={{ height: 360 }}>
           <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>Shop Floor Efficiency</Typography>

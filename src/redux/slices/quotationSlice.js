@@ -7,20 +7,20 @@ const API = `${V_URL}/quotation/manage-quotation-details`;
 const GET_API = `${V_URL}/quotation/get-quotation-details`;
 const UPDATE_API = `${V_URL}/quotation/update-quotation-details`;
 const DELETE_API = `${V_URL}/quotation/delete-quotation-details`;
+const EXPORT_API = `${V_URL}/quotation/export-pdf`;
 
 // ================= GET Quotations =================
 
 export const fetchQuotation = createAsyncThunk(
   "Quotations/fetchQuotation",
-  async ({ page, limit, search = "" } = {}) => {
-    const res = await axios.get(
-      `${GET_API}?page=${page}&limit=${limit}&search=${encodeURIComponent(
-        search
-      )}`,
-      {
-        withCredentials: true,
-      }
-    );
+  async ({ page = 1, limit = 10, search = "", clientId = "" } = {}) => {
+    let url = `${GET_API}?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`;
+    if (clientId) {
+      url += `&clientId=${clientId}`;
+    }
+    const res = await axios.get(url, {
+      withCredentials: true,
+    });
 
     return res.data;
   }
@@ -88,6 +88,32 @@ export const deleteQuotation = createAsyncThunk(
     } catch (err) {
       return rejectWithValue({
         message: err.response?.data?.message || "Delete failed",
+      });
+    }
+  }
+);
+
+// ================= EXPORT Quotations PDF =================
+export const exportQuotation = createAsyncThunk(
+  "Quotations/exportQuotation",
+  async (id, { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`${EXPORT_API}/${id}`, {
+        responseType: 'blob', // Important for file download
+        withCredentials: true
+      });
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Quotation_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      return true;
+    } catch (err) {
+      return rejectWithValue({
+        message: "PDF export failed",
       });
     }
   }

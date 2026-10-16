@@ -37,7 +37,7 @@ export default function ProductionKanbanPage() {
       <Box sx={{ overflowX: 'auto', pb: 2 }}>
         <Grid container spacing={2} sx={{ minWidth: 900, flexWrap: 'nowrap' }}>
           {STAGES.map((stage) => (
-            <Grid item key={stage} sx={{ minWidth: 220, flex: 1 }}>
+            <Grid key={stage} sx={{ minWidth: 220, flex: 1 }}>
               <Box
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(stage)}

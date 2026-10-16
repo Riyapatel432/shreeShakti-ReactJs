@@ -21,7 +21,7 @@ export default function UserDashboard() {
       </Box>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card sx={{ p: 2 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>Welcome, {currentUser?.name || 'Employee'}</Typography>

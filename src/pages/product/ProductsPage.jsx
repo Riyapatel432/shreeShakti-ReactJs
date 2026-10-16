@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Box,
+import { Box,
   Typography,
   Breadcrumbs,
   Link,
@@ -16,8 +16,7 @@ import {
   Button,
   MenuItem,
   // InputAdornment,
-  Tooltip,
-} from '@mui/material';
+  Tooltip, useTheme } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
 import {
   Edit,
@@ -71,6 +70,8 @@ const VALIDATION = {
 
 
 export default function ProductPage() {
+  const theme = useTheme();
+
 
   const dispatch = useDispatch();
 
@@ -369,11 +370,25 @@ const handleEdit = (row) => {
   // ================= DELETE =================
   const handleDeleteClick = (id) => {
     setDeleteId(id);
-    setDeleteDialog(true);
-  };
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.error.main,
+      cancelButtonColor: theme.palette.grey[500],
+      confirmButtonText: 'Yes, delete it!',
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteConfirm(id);
+      }
+    });
+};
 
-const handleDeleteConfirm = async () => {
-  const res = await dispatch(deleteProduct(deleteId));
+const handleDeleteConfirm = async (overrideId) => {
+  const res = await dispatch(deleteProduct(overrideId || deleteId));
 
   if (res.meta?.requestStatus === "fulfilled") {
     await dispatch(

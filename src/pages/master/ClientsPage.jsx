@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -16,7 +17,7 @@ import {
   Button,
   MenuItem,
   InputAdornment,
-  Tooltip,
+  Tooltip, useTheme
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
 import {
@@ -29,7 +30,7 @@ import {
   Phone as PhoneIcon,
   Receipt,
   Home,
-  // Map as MapIcon
+  History as HistoryIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
@@ -41,6 +42,7 @@ import {
   updateClient,
   deleteClient
 } from "../../redux/slices/clientSlice";
+import { fetchQuotation } from "../../redux/slices/quotationSlice";
 
 // ================= VALIDATION RULES =================
 const VALIDATION = {
@@ -83,18 +85,20 @@ const VALIDATION = {
   },
   city: {
     required: true,
-   
+
   },
   state: {
     required: true,
     minLength: 2,
     maxLength: 50,
-    
+
   }
 };
 
 
 export default function ClientsPage() {
+  const theme = useTheme();
+
 
   const dispatch = useDispatch();
 
@@ -107,14 +111,18 @@ export default function ClientsPage() {
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
- 
-const [currentPage, setCurrentPage] = useState(1);
-const [limit, setLimit] = useState(10);
-const [search, setSearch] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-const [cities, setCities] = useState([]);
+  const [cities, setCities] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyClientId, setHistoryClientId] = useState(null);
+  const [historyClientName, setHistoryClientName] = useState("");
   const initialForm = {
     name: '',
     company_name: '',
@@ -128,47 +136,52 @@ const [cities, setCities] = useState([]);
   };
 
   const [form, setForm] = useState(initialForm);
-const [debouncedSearch, setDebouncedSearch] = useState("");
-const {
-  data: clients,
-  loading: tableLoading,
-  pagination,
-} = useSelector((state) => state.clients);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const {
+    data: clients,
+    loading: tableLoading,
+    pagination,
+  } = useSelector((state) => state.clients);
 
-useEffect(() => {
-  dispatch(
-    fetchClients({
-      page: currentPage,
-      limit,
-      search:debouncedSearch,
-    })
-  );
-}, [dispatch, currentPage, limit, debouncedSearch]);
+  const {
+    data: quotations,
+    loading: quotationLoading,
+  } = useSelector((state) => state.quotations || { data: [], loading: false });
 
-// useEffect(() => {
-//   setCurrentPage(1);
-// }, [debouncedSearch]);
+  useEffect(() => {
+    dispatch(
+      fetchClients({
+        page: currentPage,
+        limit,
+        search: debouncedSearch,
+      })
+    );
+  }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  const handler = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 500);
+  // useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [debouncedSearch]);
 
-  return () => {
-    clearTimeout(handler);
-  };
-}, [search]);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
 
   // ================= SINGLE FIELD VALIDATOR =================
   const validateField = useCallback((fieldName, value) => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
 
-  
-const trimmed =
-  typeof value === "string"
-    ? value.trim()
-    : String(value ?? "").trim();
+
+    const trimmed =
+      typeof value === "string"
+        ? value.trim()
+        : String(value ?? "").trim();
     // Required check
     if (rules.required && !trimmed) {
       return `${fieldName === 'gst_no' ? 'GST No' :
@@ -250,21 +263,21 @@ const trimmed =
     if (['name', 'city', 'state'].includes(fieldName)) {
       value = rawValue.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
     }
-if (fieldName === "state") {
-  const selectedState = states.find(
-    (s) => s.name === value
-  );
+    if (fieldName === "state") {
+      const selectedState = states.find(
+        (s) => s.name === value
+      );
 
-  setCities(selectedState?.cities || []);
+      setCities(selectedState?.cities || []);
 
-  setForm((prev) => ({
-    ...prev,
-    state: value,
-    city: "", // reset city when state changes
-  }));
+      setForm((prev) => ({
+        ...prev,
+        state: value,
+        city: "", // reset city when state changes
+      }));
 
-  return;
-}
+      return;
+    }
     setForm((prev) => ({ ...prev, [fieldName]: value }));
 
     // Real-time validation only if field was touched
@@ -318,10 +331,10 @@ if (fieldName === "state") {
       status: row.status ?? true
     });
     const selectedState = states.find(
-  (s) => s.name === row.state
-);
+      (s) => s.name === row.state
+    );
 
-setCities(selectedState?.cities || []);
+    setCities(selectedState?.cities || []);
     setErrors({});
     setTouched({});
     setModalOpen(true);
@@ -348,30 +361,30 @@ setCities(selectedState?.cities || []);
       setFormLoading(false);
 
       // Check if the action was fulfilled
-     if (res.meta?.requestStatus === "fulfilled") {
- dispatch(
-    fetchClients({
-      page: currentPage,
-      limit,
-      search,
-    })
-  );
+      if (res.meta?.requestStatus === "fulfilled") {
+        dispatch(
+          fetchClients({
+            page: currentPage,
+            limit,
+            search,
+          })
+        );
 
-  setSuccessMessage(
-    isEdit
-      ? "Client updated successfully"
-      : "Client created successfully"
-  );
+        setSuccessMessage(
+          isEdit
+            ? "Client updated successfully"
+            : "Client created successfully"
+        );
 
-  setModalOpen(false);
-  setForm(initialForm);
-  setIsEdit(false);
-  setEditingId(null);
-  setErrors({});
-  setTouched({});
+        setModalOpen(false);
+        setForm(initialForm);
+        setIsEdit(false);
+        setEditingId(null);
+        setErrors({});
+        setTouched({});
 
-  return;
-}
+        return;
+      }
 
       // Handle rejected action
       const payload = res.payload;
@@ -394,23 +407,45 @@ setCities(selectedState?.cities || []);
   // ================= DELETE =================
   const handleDeleteClick = (id) => {
     setDeleteId(id);
-    setDeleteDialog(true);
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.error.main,
+      cancelButtonColor: theme.palette.grey[500],
+      confirmButtonText: 'Yes, delete it!',
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteConfirm(id);
+      }
+    });
   };
 
-const handleDeleteConfirm = async () => {
-  const res = await dispatch(deleteClient(deleteId));
+  const handleDeleteConfirm = async (overrideId) => {
+    const res = await dispatch(deleteClient(overrideId || deleteId));
 
-  if (res.meta?.requestStatus === "fulfilled") {
-    setSuccessMessage("Client deleted successfully");
-  } else {
-    setServerError(
-      res.payload?.message || "Failed to delete client"
-    );
-  }
+    if (res.meta?.requestStatus === "fulfilled") {
+      setSuccessMessage("Client deleted successfully");
+    } else {
+      setServerError(
+        res.payload?.message || "Failed to delete client"
+      );
+    }
 
-  setDeleteDialog(false);
-  setDeleteId(null);
-};
+    setDeleteDialog(false);
+    setDeleteId(null);
+  };
+
+  // ================= HISTORY =================
+  const handleOpenHistory = (row) => {
+    setHistoryClientId(row._id);
+    setHistoryClientName(row.name);
+    setHistoryOpen(true);
+    dispatch(fetchQuotation({ clientId: row._id, limit: 100 })); // fetch up to 100 for history view
+  };
   // ================= TABLE =================
   const columns = [
     {
@@ -418,7 +453,7 @@ const handleDeleteConfirm = async () => {
       label: 'Sr No',
       width: 80,
       render: (_, index) =>
-  (currentPage - 1) * limit + index + 1
+        (currentPage - 1) * limit + index + 1
     },
     { id: 'company_name', label: 'Company Name' },
     { id: 'name', label: 'Client Name' },
@@ -432,11 +467,11 @@ const handleDeleteConfirm = async () => {
       label: 'Status',
       render: (row) => (
         <Chip
-  label={row.status ? "Active" : "Inactive"}
-  size="small"
-  color={row.status ? "success" : "default"}
-  variant="outlined"
-/>
+          label={row.status ? "Active" : "Inactive"}
+          size="small"
+          color={row.status ? "success" : "default"}
+          variant="outlined"
+        />
       )
     },
     {
@@ -455,16 +490,22 @@ const handleDeleteConfirm = async () => {
               <Delete fontSize="small" />
             </IconButton>
           </Tooltip>
+
+          <Tooltip title="View History">
+            <IconButton onClick={() => handleOpenHistory(row)} color="info" size="small">
+              <HistoryIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </>
       )
     }
   ];
 
   const india = countries.find(
-  (country) => country.name === "India"
-);
+    (country) => country.name === "India"
+  );
 
-const states = india?.states || [];
+  const states = india?.states || [];
   // ================= UI =================
   return (
     <Box>
@@ -482,229 +523,229 @@ const states = india?.states || [];
       </Box>
 
       {/* TABLE */}
-<DataTable
-  title="All Clients"
-  columns={columns}
-  data={clients || []}
-  loading={tableLoading}
+      <DataTable
+        title="All Clients"
+        columns={columns}
+        data={clients || []}
+        loading={tableLoading}
 
-  searchPlaceholder="Search clients..."
-  onSearch={(value) => {
-    setSearch(value);
-    setCurrentPage(1);
-  }}
+        searchPlaceholder="Search clients..."
+        onSearch={(value) => {
+          setSearch(value);
+          setCurrentPage(1);
+        }}
 
-  currentPage={currentPage}
-  totalPages={pagination?.totalPages || 1}
-  totalRecords={pagination?.totalRecords || 0}
-  rowsPerPage={limit}
+        currentPage={currentPage}
+        totalPages={pagination?.totalPages || 1}
+        totalRecords={pagination?.totalRecords || 0}
+        rowsPerPage={limit}
 
-  onPageChange={(page) => {
-    setCurrentPage(page);
-  }}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+        }}
 
-  onRowsPerPageChange={(newLimit) => {
-    setLimit(newLimit);
-    setCurrentPage(1);
-  }}
+        onRowsPerPageChange={(newLimit) => {
+          setLimit(newLimit);
+          setCurrentPage(1);
+        }}
 
-  onAddClick={handleAdd}
-  addLabel="New Client"
-/>
+        onAddClick={handleAdd}
+        addLabel="New Client"
+      />
 
       {/* MODAL */}
-   <FormModal
-  open={modalOpen}
-  onClose={() => setModalOpen(false)}
-  title={isEdit ? "Edit Client" : "Add New Client"}
-  onSubmit={handleSubmit}
-  submitLabel={isEdit ? "Update" : "Save"}
-  serverError={serverError}
-  setServerError={setServerError}
-  maxWidth="lg"
-  fullWidth
-  loading={formLoading}
->
-  <Grid container spacing={2}>
-
-    {/* ================= ROW 1 ================= */}
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
+      <FormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={isEdit ? "Edit Client" : "Add New Client"}
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Update" : "Save"}
+        serverError={serverError}
+        setServerError={setServerError}
+        maxWidth="lg"
         fullWidth
-        label="Client Name"
-        value={form.name}
-        onChange={(e) => handleFieldChange('name', e.target.value)}
-        onBlur={() => handleBlur('name')}
-         slotProps={{
-    input: {
-      startAdornment: (
-        <InputAdornment position="start">
-          <Person fontSize="small" />
-        </InputAdornment>
-      ),
-    },
-  }}
-        {...fieldProps("name")}
-      />
-    </Grid>
+        loading={formLoading}
+      >
+        <Grid container spacing={2}>
 
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        label="Company Name"
-        value={form.company_name}
-        onChange={(e) => handleFieldChange('company_name', e.target.value)}
-        onBlur={() => handleBlur('company_name')}
-                slotProps={{
-    input: {
-      startAdornment: (
-            <InputAdornment position="start">
-              <Business fontSize="small" />
-            </InputAdornment>
-          )
-    },
-  }}
-        {...fieldProps("company_name")}
-      />
-    </Grid>
-
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        label="Email Address"
-        value={form.email}
-        onChange={(e) => handleFieldChange('email', e.target.value)}
-        onBlur={() => handleBlur('email')}
-         slotProps={{
-    input: {
-      startAdornment: (
-         <InputAdornment position="start">
-              <EmailIcon fontSize="small" />
-            </InputAdornment>
-      ),
-    },
-  }}
-        {...fieldProps("email")}
-      />
-    </Grid>
-
-    {/* ================= ROW 2 ================= */}
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        label="Phone Number"
-        value={form.phone}
-        onChange={(e) => handleFieldChange('phone', e.target.value)}
-        onBlur={() => handleBlur('phone')}
-                slotProps={{
-    input: {
-      startAdornment: (
-         <InputAdornment position="start">
-              <PhoneIcon fontSize="small" />
-            </InputAdornment>
-      ),
-    },
-  }}
-        {...fieldProps("phone")}
-      />
-    </Grid>
-
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        label="GST Number"
-        value={form.gst_no}
-        onChange={(e) => handleFieldChange('gst_no', e.target.value)}
-        onBlur={() => handleBlur('gst_no')}
-        slotProps={{
-                  input: {
-                    startAdornment: (
+          {/* ================= ROW 1 ================= */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Client Name"
+              value={form.name}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              onBlur={() => handleBlur('name')}
+              slotProps={{
+                input: {
+                  startAdornment: (
                     <InputAdornment position="start">
-                            <Receipt fontSize="small" />
-                          </InputAdornment>
-                    ),
-                  },
-                }}
-        {...fieldProps("gst_no")}
-      />
-    </Grid>
+                      <Person fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              {...fieldProps("name")}
+            />
+          </Grid>
 
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        multiline
-        minRows={1}
-        label="Address"
-        value={form.address}
-        onChange={(e) => handleFieldChange('address', e.target.value)}
-        onBlur={() => handleBlur('address')}
-         slotProps={{
-    input: {
-      startAdornment: (
-        <InputAdornment position="start">
-          <Home fontSize="small" />
-        </InputAdornment>
-      ),
-    },
-  }}
-        {...fieldProps("address")}
-      />
-    </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Company Name"
+              value={form.company_name}
+              onChange={(e) => handleFieldChange('company_name', e.target.value)}
+              onBlur={() => handleBlur('company_name')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Business fontSize="small" />
+                    </InputAdornment>
+                  )
+                },
+              }}
+              {...fieldProps("company_name")}
+            />
+          </Grid>
 
-    {/* ================= ROW 3 ================= */}
-   <Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    select
-    label="State"
-    value={form.state}
-    onChange={(e) => handleFieldChange("state", e.target.value)}
-    onBlur={() => handleBlur("state")}
-    {...fieldProps("state")}
-  >
-    {states.map((state) => (
-      <MenuItem key={state.name} value={state.name}>
-        {state.name}
-      </MenuItem>
-    ))}
-  </TextField>
-</Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Email Address"
+              value={form.email}
+              onChange={(e) => handleFieldChange('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <EmailIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              {...fieldProps("email")}
+            />
+          </Grid>
 
-    <Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    select
-    label="City"
-    value={form.city}
-    onChange={(e) => handleFieldChange("city", e.target.value)}
-    onBlur={() => handleBlur("city")}
-    disabled={!form.state}
-    {...fieldProps("city")}
-  >
-    {cities.map((city) => (
-      <MenuItem key={city.name} value={city.name}>
-        {city.name}
-      </MenuItem>
-    ))}
-  </TextField>
-</Grid>
-    <Grid size={{ xs: 12, md: 4 }}>
-   <TextField
-  fullWidth
-  select
-  label="Status"
-  value={form.status}
-  onChange={(e) =>
-    setForm({ ...form, status: e.target.value === true })
-  }
->
-  <MenuItem value={true}>Active</MenuItem>
-        <MenuItem value={false}>Inactive</MenuItem>
-</TextField>
-    </Grid>
+          {/* ================= ROW 2 ================= */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Phone Number"
+              value={form.phone}
+              onChange={(e) => handleFieldChange('phone', e.target.value)}
+              onBlur={() => handleBlur('phone')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PhoneIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              {...fieldProps("phone")}
+            />
+          </Grid>
 
-  </Grid>
-</FormModal>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="GST Number"
+              value={form.gst_no}
+              onChange={(e) => handleFieldChange('gst_no', e.target.value)}
+              onBlur={() => handleBlur('gst_no')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Receipt fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              {...fieldProps("gst_no")}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={1}
+              label="Address"
+              value={form.address}
+              onChange={(e) => handleFieldChange('address', e.target.value)}
+              onBlur={() => handleBlur('address')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Home fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              {...fieldProps("address")}
+            />
+          </Grid>
+
+          {/* ================= ROW 3 ================= */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              select
+              label="State"
+              value={form.state}
+              onChange={(e) => handleFieldChange("state", e.target.value)}
+              onBlur={() => handleBlur("state")}
+              {...fieldProps("state")}
+            >
+              {states.map((state) => (
+                <MenuItem key={state.name} value={state.name}>
+                  {state.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              select
+              label="City"
+              value={form.city}
+              onChange={(e) => handleFieldChange("city", e.target.value)}
+              onBlur={() => handleBlur("city")}
+              disabled={!form.state}
+              {...fieldProps("city")}
+            >
+              {cities.map((city, idx) => (
+                <MenuItem key={`${city.name}-${idx}`} value={city.name}>
+                  {city.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              select
+              label="Status"
+              value={form.status}
+              onChange={(e) =>
+                setForm({ ...form, status: e.target.value === true })
+              }
+            >
+              <MenuItem value={true}>Active</MenuItem>
+              <MenuItem value={false}>Inactive</MenuItem>
+            </TextField>
+          </Grid>
+
+        </Grid>
+      </FormModal>
 
       {/* DELETE CONFIRM */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
@@ -719,19 +760,46 @@ const states = india?.states || [];
           </Button>
         </DialogActions>
       </Dialog>
-<Snackbar
-  open={!!successMessage}
-  message={successMessage}
-  severity="success"
-  onClose={() => setSuccessMessage("")}
-/>
 
-<Snackbar
-  open={!!serverError}
-  message={serverError}
-  severity="error"
-  onClose={() => setServerError("")}
-/>
+      {/* HISTORY MODAL */}
+      <Dialog open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Quotation History - {historyClientName}</DialogTitle>
+        <DialogContent dividers sx={{ p: 0 }}>
+          <DataTable
+            title="Recent Quotations"
+            columns={[
+              { id: 'quotation_no', label: 'Quote No' },
+              { id: 'createdAt', label: 'Date', render: (row) => new Date(row.createdAt).toLocaleDateString() },
+              { id: 'product', label: 'Product', render: (row) => row.product?.name || '-' },
+              { id: 'grand_total', label: 'Total Amount (₹)' },
+              {
+                id: 'status', label: 'Status', render: (row) => (
+                  <Chip label={row.status ? "Active" : "Closed"} size="small" color={row.status ? "success" : "default"} />
+                )
+              }
+            ]}
+            data={quotations || []}
+            loading={quotationLoading}
+            hidePagination={true}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHistoryOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={!!successMessage}
+        message={successMessage}
+        severity="success"
+        onClose={() => setSuccessMessage("")}
+      />
+
+      <Snackbar
+        open={!!serverError}
+        message={serverError}
+        severity="error"
+        onClose={() => setServerError("")}
+      />
     </Box>
   );
 }

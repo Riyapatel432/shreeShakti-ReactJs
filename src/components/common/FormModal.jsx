@@ -36,13 +36,17 @@ export default function FormModal({
         onClose={handleClose}
         maxWidth={maxWidth}
         fullWidth={fullWidth}
-        PaperProps={{
-          sx: {
-      width: '100%',
-      maxWidth: '1100px',   // force wider modal
-      borderRadius: '12px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-    }
+        disableEnforceFocus
+        disableRestoreFocus
+        slotProps={{
+          paper: {
+            sx: {
+              width: '100%',
+              maxWidth: '1100px',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+            }
+          }
         }}
       >
         {/* HEADER */}

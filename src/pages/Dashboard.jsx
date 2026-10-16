@@ -44,10 +44,10 @@ export default function Dashboard() {
 
       {/* Bottom Row: Activity Timeline */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={7}>
+        <Grid xs={12} md={7}>
           <ActivityTimeline />
         </Grid>
-        <Grid item xs={12} md={5}>
+        <Grid xs={12} md={5}>
           <Box sx={{
             background: (theme) => theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(30,58,138,0.3) 0%, rgba(249,115,22,0.1) 100%)'

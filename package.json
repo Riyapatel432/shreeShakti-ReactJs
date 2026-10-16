@@ -24,7 +24,8 @@
     "react-hook-form": "^7.80.0",
     "react-redux": "^9.3.0",
     "react-router-dom": "^7.18.1",
-    "recharts": "^3.9.0"
+    "recharts": "^3.9.0",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",

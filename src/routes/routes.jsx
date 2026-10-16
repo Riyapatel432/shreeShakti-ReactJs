@@ -34,6 +34,7 @@ const ProfilePage = lazy(() => import('../pages/admin/ProfilePage'));
 const UserDashboard = lazy(() => import('../pages/user/UserDashboard'));
 
 // Master
+const UsersPage     = lazy(() => import('../pages/master/UsersPage'));
 const ProjectsPage  = lazy(() => import('../pages/master/ProjectsPage'));
 const QuotationsPage   = lazy(() => import('../pages/quotation/QuotationsPage'));
 const ClientsPage   = lazy(() => import('../pages/master/ClientsPage'));
@@ -43,9 +44,13 @@ const PricePage = lazy(() => import('../pages/price/PricePage'));
 const UnitsPage = lazy(() => import('../pages/master/UnitsPage'));
 const MocsPage = lazy(() => import('../pages/master/MocsPage'));
 const CostingSheetPage = lazy(() => import('../pages/costingSheet/costingSheetPage'));
+const MaterialRegisterPage = lazy(() => import('../pages/master/MaterialRegisterPage'));
+const StandardsLibraryPage = lazy(() => import('../pages/master/StandardsLibraryPage'));
+const TechSpecPage = lazy(() => import('../pages/techSpec/TechSpecPage'));
 
 // Purchase
 const PurchaseOrderPage = lazy(() => import('../pages/purchase/PurchaseOrderPage'));
+const VendorPage = lazy(() => import('../pages/purchase/VendorPage'));
 
 // Production
 const ProductionKanbanPage = lazy(() => import('../pages/production/ProductionKanbanPage'));
@@ -87,9 +92,10 @@ export const adminRoutes = [
   { path: 'profile', element: <ProfilePage /> },
 
   // ── Master Management ──────────────────────────────────────
-  { path: 'master/users',       element: cs('Master Management', 'User Management') },
+  { path: 'master/users',       element: <UsersPage /> },
   { path: 'master/roles',       element: cs('Master Management', 'Roles & Permissions') },
   { path: 'master/customers',   element: cs('Master Management', 'Customer Master') },
+  { path: 'master/vendors',     element: <VendorPage /> },
   { path: 'master/clients',     element: <ClientsPage /> },
   { path: 'master/product-categories',     element: <ProductCategoryPage /> },
   { path: 'products',     element: <ProductsPage /> },
@@ -98,6 +104,7 @@ export const adminRoutes = [
   { path: 'master/units',       element: <UnitsPage /> },
   { path: 'master/mocs',        element: <MocsPage /> },
   { path: 'quotations',     element: <QuotationsPage /> },
+  { path: 'tech-specs',     element: <TechSpecPage /> },
   { path: 'master/projects',    element: <ProjectsPage /> },
   { path: 'master/units',       element: cs('Master Management', 'Units Master') },
   { path: 'master/departments', element: cs('Master Management', 'Departments Master') },
@@ -105,6 +112,7 @@ export const adminRoutes = [
   { path: 'master/drawings',    element: cs('Master Management', 'Drawing Master') },
   { path: 'master/grids',       element: cs('Master Management', 'Grid Master') },
   { path: 'master/heat-numbers',element: cs('Master Management', 'Heat Number Master') },
+  { path: 'master/standards',   element: <StandardsLibraryPage /> },
 
   // ── Purchase Management ────────────────────────────────────
   { path: 'purchase/requisition', element: cs('Purchase Management', 'Purchase Requisition') },
@@ -114,6 +122,7 @@ export const adminRoutes = [
   { path: 'purchase/grn',         element: cs('Purchase Management', 'Goods Receipt (GRN)') },
 
   // ── Inventory Management ───────────────────────────────────
+  { path: 'inventory/materials',  element: <MaterialRegisterPage /> },
   { path: 'inventory/stock',      element: cs('Inventory Management', 'Main Stock Ledger') },
   { path: 'inventory/transfer',   element: cs('Inventory Management', 'Stock Transfer') },
   { path: 'inventory/adjustment', element: cs('Inventory Management', 'Stock Adjustment') },

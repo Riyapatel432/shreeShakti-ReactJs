@@ -1,18 +1,66 @@
-# React + Vite
+# Shree Shakti ERP - Frontend (React.js)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Date**: September 5, 2026
 
-Currently, two official plugins are available:
+## Overview
+This is the frontend client for the Shree Shakti Engineering Works ERP system. It provides a rich, responsive, and dynamic user interface for admins and employees to manage enterprise resources across various departments.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tech Stack
+- **Core**: React 19, Vite
+- **State Management**: Redux Toolkit (RTK)
+- **Styling & UI**: Material-UI (MUI) v5/v6, Framer Motion
+- **Routing**: React Router DOM v7
+- **Forms & Data**: React Hook Form, Recharts, Axios
 
-## React Compiler
+## Modules & Features Implemented (As of Date)
+The ERP dashboard is heavily modularized. Current active modules include:
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+1. **Dashboard**: High-level KPIs, activity timelines, and real-time operations overview.
+2. **Master Management**:
+   - Users
+   - Roles & Permissions
+   - Clients & Customers
+   - Projects
+   - Units & MOCs (Materials of Construction)
+   - Product Categories
+3. **Products & Inventory**:
+   - Product definitions
+   - Price Management
+4. **Sales & Estimates**:
+   - Costing Sheets
+   - Quotation Generation
+5. **Human Resources**:
+   - Employee Management
+6. **Production & Quality**:
+   - Production Kanban Board (Planning)
+   - Incoming Inspection (Quality Control)
+7. **System Settings**:
+   - Audit Logs
+   - Profile Management
 
-Note: This will impact Vite dev & build performances.
+*(Note: Several modules such as complete Purchase Management, Stock Ledgers, and advanced HR features are architected into the routing map and are marked as "Coming Soon")*
 
-## Expanding the ESLint configuration
+## Architecture Patterns
+- **Redux Slices**: Each module (e.g., `users`, `clients`, `products`) has a dedicated RTK slice handling API calls via `createAsyncThunk`.
+- **Theme**: Consistent industrial theme using `MainLayout`, an expandable `Sidebar`, and a standard `DataTable` + `FormModal` for CRUD operations.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Setup & Installation
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Environment Configuration**:
+   API URL is globally exported via `src/baseUrl.js`. By default, it points to `http://localhost:5000/api`.
+3. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+4. **Build for Production**:
+   ```bash
+   npm run build
+   ```
+
+## Troubleshooting
+- **Layout breaking on `<Grid>`**: We have migrated away from `item="true"` to prevent flex-box layout breaking. Note that React 19 might log a non-breaking console warning (`Received true for a non-boolean attribute item`) due to MUI legacy Grid compatibility.
+- **Vite Caching**: If the UI gets stuck locally, clear the Vite cache by running `npm run dev -- --force`.

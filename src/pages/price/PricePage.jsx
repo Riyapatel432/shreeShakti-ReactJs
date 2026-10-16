@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Box,
+import { Box,
   Typography,
   Breadcrumbs,
   Link,
@@ -15,8 +15,7 @@ import {
   DialogActions,
   Button,
   MenuItem,
-  Tooltip,
-} from '@mui/material';
+  Tooltip, useTheme } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -65,6 +64,8 @@ const VALIDATION = {
 
 
 export default function PricePage() {
+  const theme = useTheme();
+
 
   const dispatch = useDispatch();
 
@@ -281,16 +282,15 @@ const handleFieldChange = (fieldName, rawValue) => {
     setIsEdit(true);
     setEditingId(row._id);
     setForm({
-      
-  product_category: row.product_category?._id || row.product_category || "",
-  product: row.product?._id || row.product || "",
-  current_price: row.current_price || "",
-  effective_date: row.effective_date
-    ? row.effective_date.split("T")[0]
-    : "",
-  status: row.status ?? true,
-});
-    
+      product_category: row.product?.product_category?._id || "",
+      product: row.product?._id || "",
+      moc: row.product?.moc?._id || row.moc?._id || row.moc || "",
+      current_price: row.current_price || "",
+      effective_date: row.effective_date
+        ? row.effective_date.split("T")[0]
+        : "",
+      status: row.status ?? true,
+    });
     setErrors({});
     setTouched({});
     setModalOpen(true);
@@ -371,11 +371,25 @@ console.log("in fulfilled=======>");
   // ================= DELETE =================
   const handleDeleteClick = (id) => {
     setDeleteId(id);
-    setDeleteDialog(true);
-  };
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.error.main,
+      cancelButtonColor: theme.palette.grey[500],
+      confirmButtonText: 'Yes, delete it!',
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteConfirm(id);
+      }
+    });
+};
 
-const handleDeleteConfirm = async () => {
-  const res = await dispatch(deletePrice(deleteId));
+const handleDeleteConfirm = async (overrideId) => {
+  const res = await dispatch(deletePrice(overrideId || deleteId));
 
   if (res.meta?.requestStatus === "fulfilled") {
      dispatch(
@@ -404,10 +418,10 @@ const handleDeleteConfirm = async () => {
     render: (_, index) =>
       (currentPage - 1) * limit + index + 1,
   },
- {
+  {
     id: "product_category",
     label: "Product Category",
-    render: (row) => row.product_category?.name || "-",
+    render: (row) => row.product?.product_category?.name || "-",
   },
   {
     id: "product",

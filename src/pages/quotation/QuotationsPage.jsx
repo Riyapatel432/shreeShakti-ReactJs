@@ -1,193 +1,90 @@
 import { useEffect, useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Box,
-  Typography,
-  Breadcrumbs,
-  Link,
-  Chip,
-  Grid,
-  TextField,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  MenuItem,
-  Tooltip,
-} from '@mui/material';
+import { Box, Typography, Breadcrumbs, Link, Chip, Grid, TextField, IconButton,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, MenuItem, Tooltip, useTheme } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
 import {
-  Edit,
-  Delete,
-  NavigateNext as NavIcon,
+  Edit, Delete, NavigateNext as NavIcon, PictureAsPdf as PdfIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
 import FormModal from '../../components/common/FormModal';
 
 import {
-  fetchPrice,
-  addPrice,
-  updatePrice,
-  deletePrice
-} from "../../redux/slices/priceSlice";
-import { fetchProduct } from "../../redux/slices/productSlice";
-import {fetchProductCategory} from "../../redux/slices/productCategorySlice";
-// ================= VALIDATION RULES =================
-const VALIDATION = {
-  product: {
-    required: true,
-  },
- product_category: {
-    required: true,
-  },
-  current_price: {
-    required: true,
-  },
+  fetchQuotation, addQuotation, updateQuotation, deleteQuotation, exportQuotation
+} from "../../redux/slices/quotationSlice";
+import { fetchClients } from "../../redux/slices/clientSlice";
+import { fetchCostingSheet } from "../../redux/slices/costingSheet/costingSheetSlice";
 
-  effective_date: {
-    required: true,
-  },
+const VALIDATION = {
+  quotation_no: { required: true },
+  client: { required: true }
 };
 
-
 export default function QuotationsPage() {
+  const theme = useTheme();
 
   const dispatch = useDispatch();
 
-  // ================= STATE =================
   const [modalOpen, setModalOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editingId, setEditingId] = useState(null);
-
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
- 
-const [currentPage, setCurrentPage] = useState(1);
-const [limit, setLimit] = useState(10);
-const [search, setSearch] = useState("");
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-
   const [successMessage, setSuccessMessage] = useState("");
-const initialForm = {
-  product: "",
-   product_category: "",
-  current_price: "",
-  effective_date: "",
-  status: true,
-};
+
+  const initialForm = {
+    quotation_no: "",
+    client: "",
+    costingSheet: "",
+    tax: 18,
+    tax_type: "GST",
+    discount: 0,
+    grand_total: 0,
+    status: true,
+  };
 
   const [form, setForm] = useState(initialForm);
-const [debouncedSearch, setDebouncedSearch] = useState("");
-const {
-  data: prices = [],
-  loading: tableLoading,
-  pagination,
-} = useSelector((state) => state.prices);
-const {
-  data: products = [],
-} = useSelector((state) => state.products);
-const {
-  data: productCategories = [],
-} = useSelector((state) => state.productCategories);
 
-const filteredProducts = products.filter(
-  (p) =>
-    p.product_category?._id === form.product_category
-);
+  const { data: quotations = [], loading: tableLoading, pagination } = useSelector((state) => state.quotations);
+  const { data: clients = [] } = useSelector((state) => state.clients);
+  const { data: costingSheets = [] } = useSelector((state) => state.costingSheets);
 
-useEffect(() => {
-  dispatch(
-    fetchProduct({
-      page: currentPage,
-      limit,
-      search:debouncedSearch,
-    })
-  );
-}, [dispatch, currentPage, limit, debouncedSearch]);
+  useEffect(() => {
+    dispatch(fetchClients({ limit: 100 }));
+    dispatch(fetchCostingSheet({ limit: 100 }));
+  }, [dispatch]);
 
-useEffect(() => {
-  dispatch(
-    fetchPrice({
-      page: currentPage,
-      limit,
-      search:debouncedSearch,
-    })
-  );
-}, [dispatch, currentPage, limit, debouncedSearch]);
+  useEffect(() => {
+    dispatch(fetchQuotation({ page: currentPage, limit, search: debouncedSearch }));
+  }, [dispatch, currentPage, limit, debouncedSearch]);
 
-useEffect(() => {
-  dispatch(
-    fetchProductCategory({
-      page: currentPage,
-      limit,
-      search:debouncedSearch,
-    })
-  );
-}, [dispatch, currentPage, limit, debouncedSearch]);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(handler);
+  }, [search]);
 
-
-
-useEffect(() => {
-  const handler = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 500);
-
-  return () => {
-    clearTimeout(handler);
-  };
-}, [search]);
-
-  // ================= SINGLE FIELD VALIDATOR =================
   const validateField = useCallback((fieldName, value) => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
-
-
-const trimmed =
-  typeof value === "string"
-    ? value.trim()
-    : String(value ?? "").trim();
-    // Required check
- if (rules.required && !trimmed) {
-  return `${fieldName} is required`;
-}
-    // Skip further checks if empty and not required
-    if (!trimmed) return "";
-
-    // Min length
-    if (rules.minLength && trimmed.length < rules.minLength) {
-      return `Minimum ${rules.minLength} characters required`;
-    }
-
-    // Max length
-    if (rules.maxLength && trimmed.length > rules.maxLength) {
-      return `Maximum ${rules.maxLength} characters allowed`;
-    }
-
-    // Exact length
-    if (rules.exactLength && trimmed.length !== rules.exactLength) {
-      return `Must be exactly ${rules.exactLength} characters`;
-    }
-
-    // Pattern
-    if (rules.pattern && !rules.pattern.test(trimmed)) {
-      return rules.patternMsg || "Invalid format";
-    }
-
+    const trimmed = typeof value === "string" ? value.trim() : String(value ?? "").trim();
+    if (rules.required && !trimmed) return `${fieldName} is required`;
     return "";
   }, []);
 
-  // ================= FULL FORM VALIDATOR =================
   const validateForm = useCallback(() => {
     const newErrors = {};
     let isValid = true;
-
     Object.keys(VALIDATION).forEach((field) => {
       const error = validateField(field, form[field]);
       if (error) {
@@ -195,46 +92,25 @@ const trimmed =
         isValid = false;
       }
     });
-
     setErrors(newErrors);
-
-    // Mark all fields as touched
     const allTouched = {};
     Object.keys(VALIDATION).forEach((f) => { allTouched[f] = true; });
     setTouched(allTouched);
-
     return isValid;
   }, [form, validateField]);
 
-  // ================= FIELD CHANGE HANDLER =================
-const handleFieldChange = (fieldName, rawValue) => {
-  let value = rawValue;
-
-  setForm((prev) => {
-    const updated = { ...prev, [fieldName]: value };
-
-    // reset product when category changes
-    if (fieldName === "product_category") {
-      updated.product = "";
+  const handleFieldChange = (fieldName, value) => {
+    setForm((prev) => ({ ...prev, [fieldName]: value }));
+    if (touched[fieldName]) {
+      setErrors((prev) => ({ ...prev, [fieldName]: validateField(fieldName, value) }));
     }
+  };
 
-    return updated;
-  });
-
-  if (touched[fieldName]) {
-    const error = validateField(fieldName, value);
-    setErrors((prev) => ({ ...prev, [fieldName]: error }));
-  }
-};
-
-
-  // ================= FIELD PROPS HELPER =================
   const fieldProps = (name) => ({
     error: !!(touched[name] && errors[name]),
     helperText: (touched[name] && errors[name]) || ""
   });
 
-  // ================= OPEN ADD =================
   const handleAdd = () => {
     setIsEdit(false);
     setEditingId(null);
@@ -244,83 +120,44 @@ const handleFieldChange = (fieldName, rawValue) => {
     setModalOpen(true);
   };
 
-  // ================= OPEN EDIT =================
   const handleEdit = (row) => {
     setIsEdit(true);
     setEditingId(row._id);
     setForm({
-      
-  product_category: row.product_category?._id || row.product_category || "",
-  product: row.product?._id || row.product || "",
-  current_price: row.current_price || "",
-  effective_date: row.effective_date
-    ? row.effective_date.split("T")[0]
-    : "",
-  status: row.status ?? true,
-});
-
+      quotation_no: row.quotation_no || "",
+      client: row.client?._id || row.client || "",
+      costingSheet: row.costingSheet?._id || row.costingSheet || "",
+      tax: row.tax ?? 18,
+      tax_type: row.tax_type || "GST",
+      discount: row.discount ?? 0,
+      grand_total: row.grand_total ?? 0,
+      status: row.status ?? true,
+    });
     setErrors({});
     setTouched({});
     setModalOpen(true);
   };
 
-  // ================= SUBMIT =================
   const handleSubmit = async () => {
-
-    // Client-side validation gate
     if (!validateForm()) return;
-
     setServerError("");
     setFormLoading(true);
 
     try {
       let res;
-
       if (isEdit) {
-        res = await dispatch(updatePrice({ id: editingId, data: form }));
+        res = await dispatch(updateQuotation({ id: editingId, data: form }));
       } else {
-        res = await dispatch(addPrice(form));
+        res = await dispatch(addQuotation(form));
       }
-
       setFormLoading(false);
 
-      // Check if the action was fulfilled
-     if (res.meta?.requestStatus === "fulfilled") {
- dispatch(
-    fetchPrice({
-      page: currentPage,
-      limit,
-      search,
-    })
-  );
-
-  setSuccessMessage(
-    isEdit
-      ? "Product price updated successfully"
-      : "Product price created successfully"
-  );
-
-  setModalOpen(false);
-  setForm(initialForm);
-  setIsEdit(false);
-  setEditingId(null);
-  setErrors({});
-  setTouched({});
-
-  return;
-}
-
-      // Handle rejected action
-      const payload = res.payload;
-
-      if (payload?.field) {
-        setTouched((prev) => ({ ...prev, [payload.field]: true }));
-        setErrors((prev) => ({
-          ...prev,
-          [payload.field]: payload.message,
-        }));
+      if (res.meta?.requestStatus === "fulfilled") {
+        dispatch(fetchQuotation({ page: currentPage, limit, search }));
+        setSuccessMessage(isEdit ? "Quotation updated successfully" : "Quotation created successfully");
+        setModalOpen(false);
       } else {
-        setServerError(payload?.message || "Something went wrong");
+        setServerError(res.payload?.message || "Something went wrong");
       }
     } catch (err) {
       setFormLoading(false);
@@ -328,280 +165,154 @@ const handleFieldChange = (fieldName, rawValue) => {
     }
   };
 
-  // ================= DELETE =================
   const handleDeleteClick = (id) => {
     setDeleteId(id);
-    setDeleteDialog(true);
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.error.main,
+      cancelButtonColor: theme.palette.grey[500],
+      confirmButtonText: 'Yes, delete it!',
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteConfirm(id);
+      }
+    });
+};
+
+  const handleDeleteConfirm = async (overrideId) => {
+    const res = await dispatch(deleteQuotation(overrideId || deleteId));
+    if (res.meta?.requestStatus === "fulfilled") {
+      setSuccessMessage("Quotation deleted successfully");
+    } else {
+      setServerError(res.payload?.message || "Failed to delete");
+    }
+    setDeleteDialog(false);
+    setDeleteId(null);
   };
 
-const handleDeleteConfirm = async () => {
-  const res = await dispatch(deletePrice(deleteId));
+  const handleExportPDF = async (id) => {
+    try {
+      await dispatch(exportQuotation(id));
+      setSuccessMessage("PDF downloaded!");
+    } catch(err) {
+      setServerError("Failed to download PDF");
+    }
+  };
 
-  if (res.meta?.requestStatus === "fulfilled") {
-    setSuccessMessage("Product price deleted successfully");
-  } else {
-    setServerError(
-      res.payload?.message || "Failed to delete product price"
-    );
-  }
+  const columns = [
+    { id: "sr", label: "Sr No", width: 80, render: (_, index) => (currentPage - 1) * limit + index + 1 },
+    { id: "quotation_no", label: "Quote No" },
+    { id: "client", label: "Client", render: (row) => row.client?.company_name || row.client?.name || "-" },
+    { id: "grand_total", label: "Grand Total (₹)", render: (row) => row.grand_total ? `₹${row.grand_total}` : "-" },
+    { id: "createdAt", label: "Date", render: (row) => new Date(row.createdAt).toLocaleDateString("en-IN") },
+    {
+      id: "status", label: "Status", render: (row) => (
+        <Chip label={row.status ? "Active" : "Inactive"} size="small" color={row.status ? "success" : "default"} variant="outlined" />
+      ),
+    },
+    {
+      id: "actions", label: "Actions", render: (row) => (
+        <>
+          <Tooltip title="Export PDF">
+            <IconButton onClick={() => handleExportPDF(row._id)} color="secondary" size="small">
+              <PdfIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit">
+            <IconButton onClick={() => handleEdit(row)} color="primary" size="small">
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton onClick={() => handleDeleteClick(row._id)} color="error" size="small">
+              <Delete fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </>
+      ),
+    },
+  ];
 
-  setDeleteDialog(false);
-  setDeleteId(null);
-};
-  // ================= TABLE =================
- const columns = [
-  {
-    id: "sr",
-    label: "Sr No",
-    width: 80,
-    render: (_, index) =>
-      (currentPage - 1) * limit + index + 1,
-  },
- {
-    id: "product_category",
-    label: "Product Category",
-    render: (row) => row.product_category?.name || "-",
-  },
-  {
-    id: "product",
-    label: "Product",
-    render: (row) => row.product?.name || "-",
-  },
-
-  {
-    id: "current_price",
-    label: "Current Price",
-  },
-
-  {
-    id: "effective_date",
-    label: "Effective Date",
-    render: (row) =>
-      row.effective_date
-        ? new Date(row.effective_date).toLocaleDateString("en-IN")
-        : "-",
-  },
-
-  {
-    id: "status",
-    label: "Status",
-    render: (row) => (
-      <Chip
-        label={row.status ? "Active" : "Inactive"}
-        size="small"
-        color={row.status ? "success" : "default"}
-        variant="outlined"
-      />
-    ),
-  },
-
-  {
-    id: "actions",
-    label: "Actions",
-    render: (row) => (
-      <>
-        <Tooltip title="Edit Price">
-          <IconButton
-            onClick={() => handleEdit(row)}
-            color="primary"
-            size="small"
-          >
-            <Edit fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Delete Price">
-          <IconButton
-            onClick={() => handleDeleteClick(row._id)}
-            color="error"
-            size="small"
-          >
-            <Delete fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </>
-    ),
-  },
-];
-
-  // ================= UI =================
   return (
     <Box>
-
-      {/* HEADER */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={800}>
-          Quotations
-        </Typography>
-
+        <Typography variant="h4" fontWeight={800}>Quotations</Typography>
         <Breadcrumbs separator={<NavIcon fontSize="small" />}>
-          <Link underline="hover">Master</Link>
+          <Link underline="hover">Sales</Link>
           <Typography color="warning.main">Quotations</Typography>
         </Breadcrumbs>
       </Box>
 
-      {/* TABLE */}
-<DataTable
-  title="Prices"
-  columns={columns}
-  data={prices || []}
-  loading={tableLoading}
+      <DataTable
+        title="Quotations" columns={columns} data={quotations || []} loading={tableLoading}
+        searchPlaceholder="Search Quotes"
+        onSearch={(value) => { setSearch(value); setCurrentPage(1); }}
+        currentPage={currentPage} totalPages={pagination?.totalPages || 1} totalRecords={pagination?.totalRecords || 0} rowsPerPage={limit}
+        onPageChange={setCurrentPage} onRowsPerPageChange={(newLimit) => { setLimit(newLimit); setCurrentPage(1); }}
+        onAddClick={handleAdd} addLabel="New Quotation"
+      />
 
-  searchPlaceholder="Search Prices"
-  onSearch={(value) => {
-    setSearch(value);
-    setCurrentPage(1);
-  }}
+      <FormModal
+        open={modalOpen} onClose={() => setModalOpen(false)} title={isEdit ? "Edit Quotation" : "Create Quotation"}
+        onSubmit={handleSubmit} submitLabel={isEdit ? "Update" : "Save"} serverError={serverError} setServerError={setServerError} maxWidth="lg" fullWidth loading={formLoading}
+      >
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth label="Quotation No" value={form.quotation_no} onChange={(e) => handleFieldChange("quotation_no", e.target.value)} {...fieldProps("quotation_no")} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth select label="Client" value={form.client} onChange={(e) => handleFieldChange("client", e.target.value)} {...fieldProps("client")}>
+              <MenuItem value="">Select Client</MenuItem>
+              {clients.map((item) => <MenuItem key={item._id} value={item._id}>{item.company_name || item.name}</MenuItem>)}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth select label="Costing Sheet" value={form.costingSheet} onChange={(e) => handleFieldChange("costingSheet", e.target.value)}>
+              <MenuItem value="">-- Select Costing Sheet (BOM) --</MenuItem>
+              {costingSheets.map((sheet) => (
+                <MenuItem key={sheet._id} value={sheet._id}>Sheet #{sheet._id.substring(sheet._id.length - 6)} (Total: ₹{sheet.total})</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth type="number" label="Discount" value={form.discount} onChange={(e) => handleFieldChange("discount", e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth select label="Tax Type" value={form.tax_type} onChange={(e) => handleFieldChange("tax_type", e.target.value)}>
+              <MenuItem value="GST">GST</MenuItem>
+              <MenuItem value="IGST">IGST</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth type="number" label="Tax (%)" value={form.tax} onChange={(e) => handleFieldChange("tax", e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth type="number" label="Grand Total (Override)" value={form.grand_total} onChange={(e) => handleFieldChange("grand_total", e.target.value)} helperText="Leave 0 to use Costing Sheet Total" />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField fullWidth select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value === true })}>
+              <MenuItem value={true}>Active</MenuItem>
+              <MenuItem value={false}>Inactive</MenuItem>
+            </TextField>
+          </Grid>
+        </Grid>
+      </FormModal>
 
-  currentPage={currentPage}
-  totalPages={pagination?.totalPages || 1}
-  totalRecords={pagination?.totalRecords || 0}
-  rowsPerPage={limit}
-
-  onPageChange={(page) => {
-    setCurrentPage(page);
-  }}
-
-  onRowsPerPageChange={(newLimit) => {
-    setLimit(newLimit);
-    setCurrentPage(1);
-  }}
-
-  onAddClick={handleAdd}
-  addLabel="New Quotation"
-/>
-
-      {/* MODAL */}
-   <FormModal
-  open={modalOpen}
-  onClose={() => setModalOpen(false)}
-  title={isEdit ? "Edit Quotation" : "Add New Quotation"}
-  onSubmit={handleSubmit}
-  submitLabel={isEdit ? "Update" : "Save"}
-  serverError={serverError}
-  setServerError={setServerError}
-  maxWidth="lg"
-  fullWidth
-  loading={formLoading}
->
-  <Grid container spacing={2}>
-
-    {/* ================= ROW 1 ================= */}
-
-     <Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    select
-    label="Product Category"
-    value={form.product_category}
-    onChange={(e) =>
-      handleFieldChange("product_category", e.target.value)
-    }
-    {...fieldProps("product_category")}
-  >
-    <MenuItem value="">Select Product Category</MenuItem>
-
-    {productCategories.map((item) => (
-      <MenuItem key={item._id} value={item._id}>
-        {item.name}
-      </MenuItem>
-    ))}
-  </TextField>
-</Grid>
-
- <Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    select
-    label="Product"
-    value={form.product}
-    onChange={(e) =>
-      handleFieldChange("product", e.target.value)
-    }
-    {...fieldProps("product")}
-  >
-    <MenuItem value="">Select Product</MenuItem>
-
-   {filteredProducts.map((item) => (
-  <MenuItem key={item._id} value={item._id}>
-    {item.name}
-  </MenuItem>
-))}
-  </TextField>
-</Grid>
-
-<Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    type="number"
-    label="Current Price"
-    value={form.current_price}
-    onChange={(e) =>
-      handleFieldChange("current_price", e.target.value)
-    }
-    {...fieldProps("current_price")}
-  />
-</Grid>
-
-<Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    type="date"
-    label="Effective Date"
-    value={form.effective_date}
-    onChange={(e) =>
-      handleFieldChange("effective_date", e.target.value)
-    }
-    // InputLabelProps={{ shrink: true }}
-    {...fieldProps("effective_date")}
-  />
-</Grid>
-
-
-    <Grid size={{ xs: 12, md: 4 }}>
-   <TextField
-  fullWidth
-  select
-  label="Status"
-  value={form.status}
-  onChange={(e) =>
-    setForm({ ...form, status: e.target.value === true })
-  }
->
-  <MenuItem value={true}>Active</MenuItem>
-        <MenuItem value={false}>Inactive</MenuItem>
-</TextField>
-    </Grid>
-
-  </Grid>
-</FormModal>
-
-      {/* DELETE CONFIRM */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
-        <DialogTitle>Delete Product Category</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this Product Category?
-        </DialogContent>
+        <DialogTitle>Delete Quotation</DialogTitle>
+        <DialogContent>Are you sure you want to delete this Quotation?</DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={handleDeleteConfirm}>
-            Delete
-          </Button>
+          <Button color="error" variant="contained" onClick={handleDeleteConfirm}>Delete</Button>
         </DialogActions>
       </Dialog>
-<Snackbar
-  open={!!successMessage}
-  message={successMessage}
-  severity="success"
-  onClose={() => setSuccessMessage("")}
-/>
-
-<Snackbar
-  open={!!serverError}
-  message={serverError}
-  severity="error"
-  onClose={() => setServerError("")}
-/>
+      <Snackbar open={!!successMessage} message={successMessage} severity="success" onClose={() => setSuccessMessage("")} />
+      <Snackbar open={!!serverError} message={serverError} severity="error" onClose={() => setServerError("")} />
     </Box>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -16,7 +17,7 @@ import {
   Button,
   MenuItem,
   InputAdornment,
-  Tooltip,
+  Tooltip, useTheme
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
 import {
@@ -24,13 +25,7 @@ import {
   Delete,
   NavigateNext as NavIcon,
   Person,
-  // Business,
-  // Email as EmailIcon,
-  // Phone as PhoneIcon,
-  // Receipt,
   LocationOn,
-  // LocationCity,
-  // Map as MapIcon
 } from '@mui/icons-material';
 
 import DataTable from '../../components/common/DataTable';
@@ -46,7 +41,7 @@ import {
 // ================= VALIDATION RULES =================
 const VALIDATION = {
   name: {
-    required: true, 
+    required: true,
     unique: true,
     minLength: 2,
     maxLength: 100,
@@ -58,11 +53,13 @@ const VALIDATION = {
     minLength: 5,
     maxLength: 250
   },
- 
+
 };
 
 
 export default function ProductCategoryPage() {
+  const theme = useTheme();
+
 
   const dispatch = useDispatch();
 
@@ -75,10 +72,10 @@ export default function ProductCategoryPage() {
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
- 
-const [currentPage, setCurrentPage] = useState(1);
-const [limit, setLimit] = useState(10);
-const [search, setSearch] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
@@ -90,54 +87,54 @@ const [search, setSearch] = useState("");
   };
 
   const [form, setForm] = useState(initialForm);
-const [debouncedSearch, setDebouncedSearch] = useState("");
-const {
-  data: clients,
-  loading: tableLoading,
-  pagination,
-} = useSelector((state) => state.productCategories);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const {
+    data: clients,
+    loading: tableLoading,
+    pagination,
+  } = useSelector((state) => state.productCategories);
 
-useEffect(() => {
-  dispatch(
-    fetchProductCategory({
-      page: currentPage,
-      limit,
-      search:debouncedSearch,
-    })
-  );
-}, [dispatch, currentPage, limit, debouncedSearch]);
+  useEffect(() => {
+    dispatch(
+      fetchProductCategory({
+        page: currentPage,
+        limit,
+        search: debouncedSearch,
+      })
+    );
+  }, [dispatch, currentPage, limit, debouncedSearch]);
 
 
 
-// useEffect(() => {
-//   setCurrentPage(1);
-// }, [debouncedSearch]);
+  // useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [debouncedSearch]);
 
-useEffect(() => {
-  const handler = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 500);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
 
-  return () => {
-    clearTimeout(handler);
-  };
-}, [search]);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
 
   // ================= SINGLE FIELD VALIDATOR =================
   const validateField = useCallback((fieldName, value) => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
 
-  
-const trimmed =
-  typeof value === "string"
-    ? value.trim()
-    : String(value ?? "").trim();
+
+    const trimmed =
+      typeof value === "string"
+        ? value.trim()
+        : String(value ?? "").trim();
     // Required check
     if (rules.required && !trimmed) {
       return `${fieldName === 'name' ? 'Name' :
         fieldName === 'description' ? 'Description' :
-      
+
           fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} is required`;
     }
 
@@ -269,30 +266,30 @@ const trimmed =
       setFormLoading(false);
 
       // Check if the action was fulfilled
-     if (res.meta?.requestStatus === "fulfilled") {
- dispatch(
-    fetchProductCategory({
-      page: currentPage,
-      limit,
-      search,
-    })
-  );
+      if (res.meta?.requestStatus === "fulfilled") {
+        dispatch(
+          fetchProductCategory({
+            page: currentPage,
+            limit,
+            search,
+          })
+        );
 
-  setSuccessMessage(
-    isEdit
-      ? "Product category updated successfully"
-      : "Product category created successfully"
-  );
+        setSuccessMessage(
+          isEdit
+            ? "Product category updated successfully"
+            : "Product category created successfully"
+        );
 
-  setModalOpen(false);
-  setForm(initialForm);
-  setIsEdit(false);
-  setEditingId(null);
-  setErrors({});
-  setTouched({});
+        setModalOpen(false);
+        setForm(initialForm);
+        setIsEdit(false);
+        setEditingId(null);
+        setErrors({});
+        setTouched({});
 
-  return;
-}
+        return;
+      }
 
       // Handle rejected action
       const payload = res.payload;
@@ -315,23 +312,37 @@ const trimmed =
   // ================= DELETE =================
   const handleDeleteClick = (id) => {
     setDeleteId(id);
-    setDeleteDialog(true);
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.error.main,
+      cancelButtonColor: theme.palette.grey[500],
+      confirmButtonText: 'Yes, delete it!',
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteConfirm(id);
+      }
+    });
   };
 
-const handleDeleteConfirm = async () => {
-  const res = await dispatch(deleteProductCategory(deleteId));
+  const handleDeleteConfirm = async (overrideId) => {
+    const res = await dispatch(deleteProductCategory(overrideId || deleteId));
 
-  if (res.meta?.requestStatus === "fulfilled") {
-    setSuccessMessage("Product category deleted successfully");
-  } else {
-    setServerError(
-      res.payload?.message || "Failed to delete product category"
-    );
-  }
+    if (res.meta?.requestStatus === "fulfilled") {
+      setSuccessMessage("Product category deleted successfully");
+    } else {
+      setServerError(
+        res.payload?.message || "Failed to delete product category"
+      );
+    }
 
-  setDeleteDialog(false);
-  setDeleteId(null);
-};
+    setDeleteDialog(false);
+    setDeleteId(null);
+  };
   // ================= TABLE =================
   const columns = [
     {
@@ -339,7 +350,7 @@ const handleDeleteConfirm = async () => {
       label: 'Sr No',
       width: 80,
       render: (_, index) =>
-  (currentPage - 1) * limit + index + 1
+        (currentPage - 1) * limit + index + 1
     },
     { id: 'name', label: 'Product Category Name' },
     { id: 'description', label: 'Description' },
@@ -350,11 +361,11 @@ const handleDeleteConfirm = async () => {
       label: 'Status',
       render: (row) => (
         <Chip
-  label={row.status ? "Active" : "Inactive"}
-  size="small"
-  color={row.status ? "success" : "default"}
-  variant="outlined"
-/>
+          label={row.status ? "Active" : "Inactive"}
+          size="small"
+          color={row.status ? "success" : "default"}
+          variant="outlined"
+        />
       )
     },
     {
@@ -396,111 +407,115 @@ const handleDeleteConfirm = async () => {
       </Box>
 
       {/* TABLE */}
-<DataTable
-  title="Products Categories"
-  columns={columns}
-  data={clients || []}
-  loading={tableLoading}
+      <DataTable
+        title="Products Categories"
+        columns={columns}
+        data={clients || []}
+        loading={tableLoading}
 
-  searchPlaceholder="Search Products Categories"
-  onSearch={(value) => {
-    setSearch(value);
-    setCurrentPage(1);
-  }}
+        searchPlaceholder="Search Products Categories"
+        onSearch={(value) => {
+          setSearch(value);
+          setCurrentPage(1);
+        }}
 
-  currentPage={currentPage}
-  totalPages={pagination?.totalPages || 1}
-  totalRecords={pagination?.totalRecords || 0}
-  rowsPerPage={limit}
+        currentPage={currentPage}
+        totalPages={pagination?.totalPages || 1}
+        totalRecords={pagination?.totalRecords || 0}
+        rowsPerPage={limit}
 
-  onPageChange={(page) => {
-    setCurrentPage(page);
-  }}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+        }}
 
-  onRowsPerPageChange={(newLimit) => {
-    setLimit(newLimit);
-    setCurrentPage(1);
-  }}
+        onRowsPerPageChange={(newLimit) => {
+          setLimit(newLimit);
+          setCurrentPage(1);
+        }}
 
-  onAddClick={handleAdd}
-  addLabel="New Product Category"
-/>
+        onAddClick={handleAdd}
+        addLabel="New Product Category"
+      />
 
       {/* MODAL */}
-   <FormModal
-  open={modalOpen}
-  onClose={() => setModalOpen(false)}
-  title={isEdit ? "Edit Product Category" : "Add New Product Category"}
-  onSubmit={handleSubmit}
-  submitLabel={isEdit ? "Update" : "Save"}
-  serverError={serverError}
-  setServerError={setServerError}
-  maxWidth="lg"
-  fullWidth
-  loading={formLoading}
->
-  <Grid container spacing={2}>
-
-    {/* ================= ROW 1 ================= */}
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
+      <FormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={isEdit ? "Edit Product Category" : "Add New Product Category"}
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Update" : "Save"}
+        serverError={serverError}
+        setServerError={setServerError}
+        maxWidth="lg"
         fullWidth
-        label="Product Category Name"
-        value={form.name}
-        onChange={(e) => handleFieldChange('name', e.target.value)}
-        onBlur={() => handleBlur('name')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Person fontSize="small" />
-            </InputAdornment>
-          )
-        }}
-        {...fieldProps("name")}
-      />
-    </Grid>
+        loading={formLoading}
+      >
+        <Grid container spacing={2}>
+
+          {/* ================= ROW 1 ================= */}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Product Category Name"
+              value={form.name}
+              onChange={(e) => handleFieldChange('name', e.target.value)}
+              onBlur={() => handleBlur('name')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person fontSize="small" />
+                    </InputAdornment>
+                  )
+                }
+              }}
+              {...fieldProps("name")}
+            />
+          </Grid>
 
 
 
-    <Grid size={{ xs: 12, md: 4 }}>
-      <TextField
-        fullWidth
-        multiline
-        minRows={1}
-        label="Description"
-        value={form.description}
-        onChange={(e) => handleFieldChange('description', e.target.value)}
-        onBlur={() => handleBlur('description')}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <LocationOn fontSize="small" />
-            </InputAdornment>
-          )
-        }}
-        {...fieldProps("description")}
-      />
-    </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              multiline
+              minRows={1}
+              label="Description"
+              value={form.description}
+              onChange={(e) => handleFieldChange('description', e.target.value)}
+              onBlur={() => handleBlur('description')}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationOn fontSize="small" />
+                    </InputAdornment>
+                  )
+                }
+              }}
+              {...fieldProps("description")}
+            />
+          </Grid>
 
 
 
-    <Grid size={{ xs: 12, md: 4 }}>
-   <TextField
-  fullWidth
-  select
-  label="Status"
-  value={form.status}
-  onChange={(e) =>
-    setForm({ ...form, status: e.target.value === true })
-  }
->
-  <MenuItem value={true}>Active</MenuItem>
-        <MenuItem value={false}>Inactive</MenuItem>
-</TextField>
-    </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              select
+              label="Status"
+              value={form.status}
+              onChange={(e) =>
+                setForm({ ...form, status: e.target.value === true })
+              }
+            >
+              <MenuItem value={true}>Active</MenuItem>
+              <MenuItem value={false}>Inactive</MenuItem>
+            </TextField>
+          </Grid>
 
-  </Grid>
-</FormModal>
+        </Grid>
+      </FormModal>
 
       {/* DELETE CONFIRM */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
@@ -515,19 +530,19 @@ const handleDeleteConfirm = async () => {
           </Button>
         </DialogActions>
       </Dialog>
-<Snackbar
-  open={!!successMessage}
-  message={successMessage}
-  severity="success"
-  onClose={() => setSuccessMessage("")}
-/>
+      <Snackbar
+        open={!!successMessage}
+        message={successMessage}
+        severity="success"
+        onClose={() => setSuccessMessage("")}
+      />
 
-<Snackbar
-  open={!!serverError}
-  message={serverError}
-  severity="error"
-  onClose={() => setServerError("")}
-/>
+      <Snackbar
+        open={!!serverError}
+        message={serverError}
+        severity="error"
+        onClose={() => setServerError("")}
+      />
     </Box>
   );
 }

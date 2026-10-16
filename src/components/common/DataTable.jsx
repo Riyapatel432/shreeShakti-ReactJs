@@ -32,7 +32,6 @@ export default function DataTable({
 
   // Backend pagination props
   currentPage = 1,
-  // totalPages = 1,
   totalRecords = 0,
   rowsPerPage = 10,
 
@@ -164,7 +163,10 @@ export default function DataTable({
               size="small"
               variant="contained"
               color="warning"
-              onClick={onAddClick}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                onAddClick();
+              }}
               startIcon={<AddIcon />}
               sx={{ height: 38 }}
             >
@@ -185,7 +187,7 @@ export default function DataTable({
                 <TableCell
                   key={col.id}
                   align={col.align || "left"}
-                  sx={{ width: col.width }}
+                  sx={{ width: col.width, whiteSpace: "nowrap" }}
                 >
                   {col.sortable !== false ? (
                     <TableSortLabel

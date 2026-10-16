@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -16,7 +17,7 @@ import {
   Button,
   MenuItem,
   InputAdornment,
-  Tooltip,
+  Tooltip, useTheme
 } from '@mui/material';
 import Snackbar from '../../components/common/Snackbar';
 import {
@@ -48,6 +49,8 @@ const VALIDATION = {
 
 
 export default function UnitsPage() {
+  const theme = useTheme();
+
 
   const dispatch = useDispatch();
 
@@ -60,60 +63,60 @@ export default function UnitsPage() {
   const [touched, setTouched] = useState({});
   const [serverError, setServerError] = useState("");
   const [formLoading, setFormLoading] = useState(false);
- 
-const [currentPage, setCurrentPage] = useState(1);
-const [limit, setLimit] = useState(10);
-const [search, setSearch] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
-const initialForm = {
-  name: "",
-  status: true,
-};
+  const initialForm = {
+    name: "",
+    status: true,
+  };
 
   const [form, setForm] = useState(initialForm);
-const [debouncedSearch, setDebouncedSearch] = useState("");
-const {
-  data: units,
-  loading: tableLoading,
-  pagination,
-} = useSelector((state) => state.units);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const {
+    data: units,
+    loading: tableLoading,
+    pagination,
+  } = useSelector((state) => state.units);
 
-useEffect(() => {
-  dispatch(
-    fetchUnit({
-      page: currentPage,
-      limit,
-      search:debouncedSearch,
-    })
-  );
-}, [dispatch, currentPage, limit, debouncedSearch]);
+  useEffect(() => {
+    dispatch(
+      fetchUnit({
+        page: currentPage,
+        limit,
+        search: debouncedSearch,
+      })
+    );
+  }, [dispatch, currentPage, limit, debouncedSearch]);
 
-// useEffect(() => {
-//   setCurrentPage(1);
-// }, [debouncedSearch]);
+  // useEffect(() => {
+  //   setCurrentPage(1);
+  // }, [debouncedSearch]);
 
-useEffect(() => {
-  const handler = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 500);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
 
-  return () => {
-    clearTimeout(handler);
-  };
-}, [search]);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
 
   // ================= SINGLE FIELD VALIDATOR =================
   const validateField = useCallback((fieldName, value) => {
     const rules = VALIDATION[fieldName];
     if (!rules) return "";
 
-  
-const trimmed =
-  typeof value === "string"
-    ? value.trim()
-    : String(value ?? "").trim();
+
+    const trimmed =
+      typeof value === "string"
+        ? value.trim()
+        : String(value ?? "").trim();
     // Required check
     if (rules.required && !trimmed) {
       return `${fieldName === 'name' ? 'Name' :
@@ -216,10 +219,10 @@ const trimmed =
   const handleEdit = (row) => {
     setIsEdit(true);
     setEditingId(row._id);
-   setForm({
-  name: row.name || "",
-  status: row.status ?? true,
-});
+    setForm({
+      name: row.name || "",
+      status: row.status ?? true,
+    });
     setErrors({});
     setTouched({});
     setModalOpen(true);
@@ -246,30 +249,30 @@ const trimmed =
       setFormLoading(false);
 
       // Check if the action was fulfilled
-     if (res.meta?.requestStatus === "fulfilled") {
-dispatch(
-  fetchUnit({
-    page: currentPage,
-    limit,
-    search,
-  })
-);
+      if (res.meta?.requestStatus === "fulfilled") {
+        dispatch(
+          fetchUnit({
+            page: currentPage,
+            limit,
+            search,
+          })
+        );
 
- setSuccessMessage(
-  isEdit
-    ? "Unit updated successfully"
-    : "Unit created successfully"
-);
+        setSuccessMessage(
+          isEdit
+            ? "Unit updated successfully"
+            : "Unit created successfully"
+        );
 
-  setModalOpen(false);
-  setForm(initialForm);
-  setIsEdit(false);
-  setEditingId(null);
-  setErrors({});
-  setTouched({});
+        setModalOpen(false);
+        setForm(initialForm);
+        setIsEdit(false);
+        setEditingId(null);
+        setErrors({});
+        setTouched({});
 
-  return;
-}
+        return;
+      }
 
       // Handle rejected action
       const payload = res.payload;
@@ -292,23 +295,37 @@ dispatch(
   // ================= DELETE =================
   const handleDeleteClick = (id) => {
     setDeleteId(id);
-    setDeleteDialog(true);
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.error.main,
+      cancelButtonColor: theme.palette.grey[500],
+      confirmButtonText: 'Yes, delete it!',
+      background: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteConfirm(id);
+      }
+    });
   };
 
-const handleDeleteConfirm = async () => {
-  const res = await dispatch(deleteUnit(deleteId));
+  const handleDeleteConfirm = async (overrideId) => {
+    const res = await dispatch(deleteUnit(overrideId || deleteId));
 
-  if (res.meta?.requestStatus === "fulfilled") {
-    setSuccessMessage("Unit deleted successfully");
-  } else {
-    setServerError(
-      res.payload?.message || "Failed to delete unit"
-    );
-  }
+    if (res.meta?.requestStatus === "fulfilled") {
+      setSuccessMessage("Unit deleted successfully");
+    } else {
+      setServerError(
+        res.payload?.message || "Failed to delete unit"
+      );
+    }
 
-  setDeleteDialog(false);
-  setDeleteId(null);
-};
+    setDeleteDialog(false);
+    setDeleteId(null);
+  };
   // ================= TABLE =================
   const columns = [
     {
@@ -316,22 +333,22 @@ const handleDeleteConfirm = async () => {
       label: 'Sr No',
       width: 80,
       render: (_, index) =>
-  (currentPage - 1) * limit + index + 1
+        (currentPage - 1) * limit + index + 1
     },
-   {
-  id: "name",
-  label: "Unit Name",
-},
+    {
+      id: "name",
+      label: "Unit Name",
+    },
     {
       id: 'status',
       label: 'Status',
       render: (row) => (
         <Chip
-  label={row.status ? "Active" : "Inactive"}
-  size="small"
-  color={row.status ? "success" : "default"}
-  variant="outlined"
-/>
+          label={row.status ? "Active" : "Inactive"}
+          size="small"
+          color={row.status ? "success" : "default"}
+          variant="outlined"
+        />
       )
     },
     {
@@ -362,7 +379,7 @@ const handleDeleteConfirm = async () => {
       {/* HEADER */}
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" fontWeight={800}>
-          Unit 
+          Unit
         </Typography>
 
         <Breadcrumbs separator={<NavIcon fontSize="small" />}>
@@ -372,90 +389,92 @@ const handleDeleteConfirm = async () => {
       </Box>
 
       {/* TABLE */}
-<DataTable
-  title="Units "
-  columns={columns}
-  data={units || []}
-  loading={tableLoading}
+      <DataTable
+        title="Units "
+        columns={columns}
+        data={units || []}
+        loading={tableLoading}
 
-  searchPlaceholder="Search Units "
-  onSearch={(value) => {
-    setSearch(value);
-    setCurrentPage(1);
-  }}
+        searchPlaceholder="Search Units "
+        onSearch={(value) => {
+          setSearch(value);
+          setCurrentPage(1);
+        }}
 
-  currentPage={currentPage}
-  totalPages={pagination?.totalPages || 1}
-  totalRecords={pagination?.totalRecords || 0}
-  rowsPerPage={limit}
+        currentPage={currentPage}
+        totalPages={pagination?.totalPages || 1}
+        totalRecords={pagination?.totalRecords || 0}
+        rowsPerPage={limit}
 
-  onPageChange={(page) => {
-    setCurrentPage(page);
-  }}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+        }}
 
-  onRowsPerPageChange={(newLimit) => {
-    setLimit(newLimit);
-    setCurrentPage(1);
-  }}
+        onRowsPerPageChange={(newLimit) => {
+          setLimit(newLimit);
+          setCurrentPage(1);
+        }}
 
-  onAddClick={handleAdd}
-  addLabel="New Unit "
-/>
+        onAddClick={handleAdd}
+        addLabel="New Unit "
+      />
 
       {/* MODAL */}
-   <FormModal
-  open={modalOpen}
-  onClose={() => setModalOpen(false)}
-  title={isEdit ? "Edit Unit " : "Add New Unit "}
-  onSubmit={handleSubmit}
-  submitLabel={isEdit ? "Update" : "Save"}
-  serverError={serverError}
-  setServerError={setServerError}
-  maxWidth="lg"
-  fullWidth
-  loading={formLoading}
->
-  <Grid container spacing={2}>
+      <FormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={isEdit ? "Edit Unit " : "Add New Unit "}
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Update" : "Save"}
+        serverError={serverError}
+        setServerError={setServerError}
+        maxWidth="lg"
+        fullWidth
+        loading={formLoading}
+      >
+        <Grid container spacing={2}>
 
-    {/* ================= ROW 1 ================= */}
+          {/* ================= ROW 1 ================= */}
 
-     <Grid size={{ xs: 12, md: 4 }}>
-  <TextField
-    fullWidth
-    label="Unit Name"
-    value={form.name}
-    onChange={(e) => handleFieldChange("name", e.target.value)}
-    onBlur={() => handleBlur("name")}
-    InputProps={{
-      startAdornment: (
-        <InputAdornment position="start">
-          <Person fontSize="small" />
-        </InputAdornment>
-      ),
-    }}
-    {...fieldProps("name")}
-  />
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              label="Unit Name"
+              value={form.name}
+              onChange={(e) => handleFieldChange("name", e.target.value)}
+              onBlur={() => handleBlur("name")}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }
+              }}
+              {...fieldProps("name")}
+            />
 
-    </Grid>
+          </Grid>
 
 
-    <Grid size={{ xs: 12, md: 4 }}>
-   <TextField
-  fullWidth
-  select
-  label="Status"
-  value={form.status}
-  onChange={(e) =>
-    setForm({ ...form, status: e.target.value === true })
-  }
->
-  <MenuItem value={true}>Active</MenuItem>
-        <MenuItem value={false}>Inactive</MenuItem>
-</TextField>
-    </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              fullWidth
+              select
+              label="Status"
+              value={form.status}
+              onChange={(e) =>
+                setForm({ ...form, status: e.target.value === true })
+              }
+            >
+              <MenuItem value={true}>Active</MenuItem>
+              <MenuItem value={false}>Inactive</MenuItem>
+            </TextField>
+          </Grid>
 
-  </Grid>
-</FormModal>
+        </Grid>
+      </FormModal>
 
       {/* DELETE CONFIRM */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
@@ -470,19 +489,19 @@ const handleDeleteConfirm = async () => {
           </Button>
         </DialogActions>
       </Dialog>
-<Snackbar
-  open={!!successMessage}
-  message={successMessage}
-  severity="success"
-  onClose={() => setSuccessMessage("")}
-/>
+      <Snackbar
+        open={!!successMessage}
+        message={successMessage}
+        severity="success"
+        onClose={() => setSuccessMessage("")}
+      />
 
-<Snackbar
-  open={!!serverError}
-  message={serverError}
-  severity="error"
-  onClose={() => setServerError("")}
-/>
+      <Snackbar
+        open={!!serverError}
+        message={serverError}
+        severity="error"
+        onClose={() => setServerError("")}
+      />
     </Box>
   );
 }

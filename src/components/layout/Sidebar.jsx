@@ -25,6 +25,8 @@ const menuItems = [
     { name: 'Product Category', path: '/admin/master/product-categories' },
      { name: 'Unit', path: '/admin/master/units' },
      {name: "Moc", path: '/admin/master/mocs'},
+     { name: 'Standards Library', path: '/admin/master/standards' },
+     { name: 'Projects', path: '/admin/master/projects' },
   ]},
 
   { title: 'Product', icon: <InventoryIcon />, path: '/admin/products' },
@@ -32,12 +34,12 @@ const menuItems = [
   { title: 'Costing Sheet', icon: <DashboardIcon />, path: '/admin/costingSheet' },
 
   { title: 'Quotations', icon: <DashboardIcon />, path: '/admin/quotations' },
+  { title: 'Tech Specs', icon: <DashboardIcon />, path: '/admin/tech-specs' },
 
-  // { title: 'Purchase Management', icon: <PurchaseIcon />, path: '/admin/purchase', sub: [
-  //   { name: 'Purchase Requisition', path: '/admin/purchase/requisition' }, { name: 'Purchase Offer', path: '/admin/purchase/offer' },
-  //   { name: 'Purchase Order', path: '/admin/purchase/order' }, { name: 'Vendor Comparison', path: '/admin/purchase/comparison' },
-  //   { name: 'Goods Receipt (GRN)', path: '/admin/purchase/grn' },
-  // ]},
+  { title: 'Purchase Management', icon: <RupeeIcon />, path: '/admin/purchase', sub: [
+    { name: 'Vendors', path: '/admin/master/vendors' },
+    { name: 'Purchase Order', path: '/admin/purchase/order' },
+  ]},
   // { title: 'Inventory Management', icon: <InventoryIcon />, path: '/admin/inventory', sub: [
   //   { name: 'Main Stock', path: '/admin/inventory/stock' }, { name: 'Stock Transfer', path: '/admin/inventory/transfer' },
   //   { name: 'Stock Adjustment', path: '/admin/inventory/adjustment' }, { name: 'Bin Management', path: '/admin/inventory/bins' },
@@ -255,7 +257,6 @@ export default function Sidebar() {
     <Box component="nav" sx={{ width: { md: sidebarOpen ? DRAWER_WIDTH : MINI_WIDTH }, flexShrink: { md: 0 }, transition: 'width 0.3s ease' }}>
       {isMobile ? (
         <Drawer variant="temporary" open={sidebarOpen} onClose={() => dispatch(setSidebarOpen(false))}
-          ModalProps={{ keepMounted: true }}
           sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: DRAWER_WIDTH } }}>
           {drawerContent}
         </Drawer>
