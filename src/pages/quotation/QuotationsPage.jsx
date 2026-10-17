@@ -272,11 +272,36 @@ export default function QuotationsPage() {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField fullWidth select label="Costing Sheet" value={form.costingSheet} onChange={(e) => handleFieldChange("costingSheet", e.target.value)}>
-              <MenuItem value="">-- Select Costing Sheet (BOM) --</MenuItem>
-              {costingSheets.map((sheet) => (
-                <MenuItem key={sheet._id} value={sheet._id}>Sheet #{sheet._id.substring(sheet._id.length - 6)} (Total: ₹{sheet.total})</MenuItem>
-              ))}
+            <TextField
+              fullWidth
+              select
+              label="Costing Sheet"
+              value={form.costingSheet}
+              onChange={(e) => {
+                const sheetId = e.target.value;
+                const selected = costingSheets.find((s) => s._id === sheetId);
+                handleFieldChange("costingSheet", sheetId);
+                if (selected) {
+                  const total = selected.amount || (selected.qty * selected.rate) || selected.grandTotal || selected.total || 0;
+                  setForm((prev) => ({
+                    ...prev,
+                    costingSheet: sheetId,
+                    grand_total: prev.grand_total ? prev.grand_total : total,
+                  }));
+                }
+              }}
+            >
+              <MenuItem value="">-- Select Costing Sheet --</MenuItem>
+              {costingSheets.map((sheet) => {
+                const catName = sheet.product_category?.name || sheet.product_category || "General";
+                const prodName = sheet.product?.name || "";
+                const amount = sheet.amount || (sheet.qty * sheet.rate) || sheet.grandTotal || sheet.total || 0;
+                return (
+                  <MenuItem key={sheet._id} value={sheet._id}>
+                    {catName} {prodName ? `- ${prodName}` : ""} (₹{amount})
+                  </MenuItem>
+                );
+              })}
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>

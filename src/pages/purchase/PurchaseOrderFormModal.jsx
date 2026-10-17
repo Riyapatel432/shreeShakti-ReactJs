@@ -2,16 +2,28 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField, MenuItem, TableContainer, Paper, Table, TableHead, TableRow, TableCell, TableBody, IconButton, Typography, Box } from "@mui/material";
 import { Delete } from "@mui/icons-material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
 import Swal from "sweetalert2";
-import { createPurchaseOrder, updatePurchaseOrder } from "../../redux/slices/purchaseSlice";
+import { createPurchaseOrder, updatePurchaseOrder, fetchVendors } from "../../redux/slices/purchaseSlice";
+import { getMaterials } from "../../redux/slices/materialSlice";
 
 export default function PurchaseOrderFormModal({ open, onClose, po }) {
   const dispatch = useDispatch();
   const { vendors = [] } = useSelector((state) => state.purchase || {});
-  const { data: materials = [] } = useSelector((state) => state.materials || {});
+  const materials = useSelector((state) => state.materials?.materials || state.materials?.data || []);
   
   const [loading, setLoading] = useState(false);
   const isEdit = !!po;
+
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchVendors({ limit: 100 }));
+      dispatch(getMaterials({ limit: 100 }));
+    }
+  }, [open, dispatch]);
 
   const [form, setForm] = useState({
     vendor: "",
@@ -106,30 +118,65 @@ export default function PurchaseOrderFormModal({ open, onClose, po }) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>{isEdit ? "Edit Purchase Order" : "Create Purchase Order"}</DialogTitle>
-      <DialogContent dividers>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
-            <TextField fullWidth select label="Vendor" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })}>
-              {vendors.map(v => <MenuItem key={v._id} value={v._id}>{v.company_name}</MenuItem>)}
-            </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth type="date" label="Order Date" InputLabelProps={{ shrink: true }} value={form.orderDate} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <TextField fullWidth type="date" label="Delivery Date" InputLabelProps={{ shrink: true }} value={form.expectedDeliveryDate} onChange={(e) => setForm({ ...form, expectedDeliveryDate: e.target.value })} />
-          </Grid>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+        <DialogTitle>{isEdit ? "Edit Purchase Order" : "Create Purchase Order"}</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+  <TextField
+    fullWidth
+    select
+    label="Vendor"
+    value={form.vendor}
+    onChange={(e) =>
+      setForm({ ...form, vendor: e.target.value })
+    }
+  >
+    <MenuItem value="">-- Select Vendor --</MenuItem>
+    {vendors.map((v) => (
+      <MenuItem key={v._id} value={v._id}>
+        {v.company_name}
+      </MenuItem>
+    ))}
+  </TextField>
+</Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <DatePicker
+                label="Order Date"
+                value={form.orderDate ? dayjs(form.orderDate) : null}
+                onChange={(newValue) => setForm({
+                  ...form,
+                  orderDate: newValue && newValue.isValid() ? newValue.format('YYYY-MM-DD') : ''
+                })}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <DatePicker
+                label="Delivery Date"
+                value={form.expectedDeliveryDate ? dayjs(form.expectedDeliveryDate) : null}
+                onChange={(newValue) => setForm({
+                  ...form,
+                  expectedDeliveryDate: newValue && newValue.isValid() ? newValue.format('YYYY-MM-DD') : ''
+                })}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </Grid>
 
           <Grid item xs={12}>
             <Typography variant="h6" sx={{ mt: 2 }}>Line Items</Typography>
             <Box sx={{ display: 'flex', gap: 2, mb: 2, mt: 1 }}>
               <TextField select label="Material" size="small" value={newItem.material} onChange={(e) => {
                 const mat = materials.find(m => m._id === e.target.value);
-                setNewItem({ ...newItem, material: e.target.value, description: mat?.description || "", rate: mat?.unitRate || 0 });
+                setNewItem({ ...newItem, material: e.target.value, description: mat?.description || mat?.materialName || "", rate: mat?.unitRate || 0 });
               }} sx={{ flex: 2 }}>
-                {materials.map(m => <MenuItem key={m._id} value={m._id}>{m.materialCode} - {m.description}</MenuItem>)}
+                <MenuItem value="">-- Select Material --</MenuItem>
+                {materials.map(m => (
+                  <MenuItem key={m._id} value={m._id}>
+                    {m.materialCode ? `${m.materialCode} - ` : ""}{m.description || m.materialName || "Unnamed Material"}
+                  </MenuItem>
+                ))}
               </TextField>
               <TextField label="Description" size="small" value={newItem.description} onChange={(e) => setNewItem({ ...newItem, description: e.target.value })} sx={{ flex: 2 }} />
               <TextField label="Qty" type="number" size="small" value={newItem.qtyOrdered} onChange={(e) => setNewItem({ ...newItem, qtyOrdered: Number(e.target.value) })} sx={{ flex: 1 }} />
@@ -195,5 +242,6 @@ export default function PurchaseOrderFormModal({ open, onClose, po }) {
         </Button>
       </DialogActions>
     </Dialog>
+    </LocalizationProvider>
   );
 }

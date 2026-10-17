@@ -48,11 +48,16 @@ export default function SelectCostingSheetModal({ open, onClose, onGenerated }) 
           disabled={loading}
         >
           <MenuItem value="">Select...</MenuItem>
-          {costingSheets?.map((sheet) => (
-            <MenuItem key={sheet._id} value={sheet._id}>
-              {sheet.product_category} - {sheet.client?.company_name} (Total: ₹{sheet.grandTotal})
-            </MenuItem>
-          ))}
+          {costingSheets?.map((sheet) => {
+            const catName = sheet.product_category?.name || sheet.product_category || "General";
+            const prodName = sheet.product?.name || "";
+            const amountText = sheet.amount ? `₹${sheet.amount}` : (sheet.grandTotal ? `₹${sheet.grandTotal}` : "");
+            return (
+              <MenuItem key={sheet._id} value={sheet._id}>
+                {catName} {prodName ? `- ${prodName}` : ""} {amountText ? `(${amountText})` : ""}
+              </MenuItem>
+            );
+          })}
         </TextField>
       </DialogContent>
       <DialogActions>

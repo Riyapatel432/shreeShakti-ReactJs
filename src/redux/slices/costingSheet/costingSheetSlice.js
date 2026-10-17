@@ -95,17 +95,23 @@ const costingSheetSlice = createSlice({
       .addCase(fetchCostingSheet.pending, (state) => {
         state.loading = true;
       })
-   .addCase(fetchCostingSheet.fulfilled, (state, action) => {
-  state.loading = false;
-  state.data = action.payload.data;
+    .addCase(fetchCostingSheet.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = Array.isArray(action.payload?.data)
+        ? action.payload.data
+        : Array.isArray(action.payload)
+        ? action.payload
+        : [];
 
-  state.pagination = {
-    currentPage: action.payload.pagination.currentPage,
-    totalPages: action.payload.pagination.totalPages,
-    totalRecords: action.payload.pagination.totalRecords,
-    limit: action.payload.pagination.limit,
-  };
-})
+      if (action.payload?.pagination) {
+        state.pagination = {
+          currentPage: action.payload.pagination.currentPage || 1,
+          totalPages: action.payload.pagination.totalPages || 1,
+          totalRecords: action.payload.pagination.totalRecords || 0,
+          limit: action.payload.pagination.limit || 10,
+        };
+      }
+    })
       .addCase(fetchCostingSheet.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;

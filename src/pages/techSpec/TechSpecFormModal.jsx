@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { updateTechSpec } from "../../redux/slices/techSpecSlice";
+import { fetchClients } from "../../redux/slices/clientSlice";
+import { fetchProjects } from "../../redux/slices/projectSlice";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   Grid, TextField, Typography, Box, Divider, MenuItem, IconButton, Switch, FormControlLabel
@@ -10,13 +12,22 @@ import Swal from "sweetalert2";
 
 export default function TechSpecFormModal({ open, onClose, spec }) {
   const dispatch = useDispatch();
+  const { data: clients = [] } = useSelector((state) => state.clients || {});
+  const { projects = [] } = useSelector((state) => state.projects || {});
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(null);
+
+  useEffect(() => {
+    dispatch(fetchClients({ limit: 100 }));
+    dispatch(fetchProjects({ limit: 100 }));
+  }, [dispatch]);
 
   useEffect(() => {
     if (spec) {
       setForm({
         ...spec,
+        client: spec.client?._id || spec.client || "",
+        project: spec.project?._id || spec.project || "",
         moc: spec.moc || { shell: '', head: '', nozzles: '' },
         categoryDetails: spec.categoryDetails || {},
         nozzleSchedule: spec.nozzleSchedule || []
@@ -78,8 +89,40 @@ export default function TechSpecFormModal({ open, onClose, spec }) {
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle1" fontWeight="bold">General Details</Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} md={4}><TextField fullWidth label="Client" value={form.client?.company_name || ""} disabled /></Grid>
-            <Grid item xs={12} md={4}><TextField fullWidth label="Project" value={form.project?.name || ""} disabled /></Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                select
+                label="Client"
+                name="client"
+                value={form.client || ""}
+                onChange={handleChange}
+              >
+                <MenuItem value="">-- Select Client --</MenuItem>
+                {clients.map((c) => (
+                  <MenuItem key={c._id} value={c._id}>
+                    {c.company_name || c.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                select
+                label="Project"
+                name="project"
+                value={form.project || ""}
+                onChange={handleChange}
+              >
+                <MenuItem value="">-- Select Project --</MenuItem>
+                {projects.map((p) => (
+                  <MenuItem key={p._id} value={p._id}>
+                    {p.projectName || p.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
             <Grid item xs={12} md={4}><TextField fullWidth label="Product Category" value={form.product_category || ""} disabled /></Grid>
             <Grid item xs={12} md={4}>
               <TextField fullWidth select label="Status" name="status" value={form.status} onChange={handleChange}>

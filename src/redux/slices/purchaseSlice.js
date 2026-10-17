@@ -1,14 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { V_URL } from '../../baseUrl';
 
 // Vendor Thunks (Calling the Client API with type=vendor)
 export const fetchVendors = createAsyncThunk(
   'purchase/fetchVendors',
   async (params, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` }, params: { ...params, type: 'vendor' } };
-      const response = await axios.get('/api/client', config);
+      const config = {
+        params: { ...params, type: 'vendor' },
+        withCredentials: true,
+      };
+      const response = await axios.get(`${V_URL}/client/get-client-details`, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -21,9 +24,8 @@ export const fetchPurchaseOrders = createAsyncThunk(
   'purchase/fetchPurchaseOrders',
   async (params, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` }, params };
-      const response = await axios.get('/api/purchase-order', config);
+      const config = { params, withCredentials: true };
+      const response = await axios.get(`${V_URL}/purchase-order`, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -35,9 +37,8 @@ export const getPurchaseOrderById = createAsyncThunk(
   'purchase/getPurchaseOrderById',
   async (id, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.get(`/api/purchase-order/${id}`, config);
+      const config = { withCredentials: true };
+      const response = await axios.get(`${V_URL}/purchase-order/${id}`, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -49,9 +50,8 @@ export const createPurchaseOrder = createAsyncThunk(
   'purchase/createPurchaseOrder',
   async (data, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.post('/api/purchase-order', data, config);
+      const config = { withCredentials: true };
+      const response = await axios.post(`${V_URL}/purchase-order`, data, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -63,9 +63,8 @@ export const updatePurchaseOrder = createAsyncThunk(
   'purchase/updatePurchaseOrder',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.put(`/api/purchase-order/${id}`, data, config);
+      const config = { withCredentials: true };
+      const response = await axios.put(`${V_URL}/purchase-order/${id}`, data, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -77,9 +76,8 @@ export const deletePurchaseOrder = createAsyncThunk(
   'purchase/deletePurchaseOrder',
   async (id, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.delete(`/api/purchase-order/${id}`, config);
+      const config = { withCredentials: true };
+      const response = await axios.delete(`${V_URL}/purchase-order/${id}`, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -91,9 +89,8 @@ export const updatePurchaseOrderStatus = createAsyncThunk(
   'purchase/updatePurchaseOrderStatus',
   async ({ id, status }, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.put(`/api/purchase-order/${id}/status`, { status }, config);
+      const config = { withCredentials: true };
+      const response = await axios.put(`${V_URL}/purchase-order/${id}/status`, { status }, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -106,9 +103,8 @@ export const fetchGoodsReceipts = createAsyncThunk(
   'purchase/fetchGoodsReceipts',
   async (purchaseOrderId, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` }, params: { purchaseOrderId } };
-      const response = await axios.get('/api/goods-receipt', config);
+      const config = { params: { purchaseOrderId }, withCredentials: true };
+      const response = await axios.get(`${V_URL}/goods-receipt`, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });
@@ -120,9 +116,8 @@ export const createGoodsReceipt = createAsyncThunk(
   'purchase/createGoodsReceipt',
   async (data, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      const response = await axios.post('/api/goods-receipt', data, config);
+      const config = { withCredentials: true };
+      const response = await axios.post(`${V_URL}/goods-receipt`, data, config);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { message: error.message });

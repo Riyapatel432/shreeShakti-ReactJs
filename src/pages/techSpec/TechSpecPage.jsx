@@ -114,7 +114,10 @@ export default function TechSpecPage() {
       {modalOpen && (
         <TechSpecFormModal
           open={modalOpen}
-          onClose={() => setModalOpen(false)}
+          onClose={() => {
+            setModalOpen(false);
+            dispatch(fetchTechSpecs());
+          }}
           spec={selectedSpec}
         />
       )}

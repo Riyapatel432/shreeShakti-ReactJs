@@ -38,12 +38,11 @@ export const addQuotation = createAsyncThunk(
       return res.data;
 
     } catch (err) {
-      const msg = err.response?.data?.message;
-
+      const data = err.response?.data;
+      const msg = data?.error ? `${data.message}: ${data.error}` : (data?.message || "Something went wrong");
 
       return rejectWithValue({
-        field,
-        message: msg || "Something went wrong",
+        message: msg,
       });
     }
   }
@@ -62,11 +61,8 @@ export const updateQuotation = createAsyncThunk(
     } catch (err) {
       const data = err.response?.data;
       const msg = data?.message;
-      
-   
 
       return rejectWithValue({
-        field,
         message: msg || "Something went wrong",
       });
     }
@@ -135,17 +131,23 @@ const QuotationSlice = createSlice({
       .addCase(fetchQuotation.pending, (state) => {
         state.loading = true;
       })
-   .addCase(fetchQuotation.fulfilled, (state, action) => {
-  state.loading = false;
-  state.data = action.payload.data;
+    .addCase(fetchQuotation.fulfilled, (state, action) => {
+      state.loading = false;
+      state.data = Array.isArray(action.payload?.data)
+        ? action.payload.data
+        : Array.isArray(action.payload)
+        ? action.payload
+        : [];
 
-  state.pagination = {
-    currentPage: action.payload.pagination.currentPage,
-    totalPages: action.payload.pagination.totalPages,
-    totalRecords: action.payload.pagination.totalRecords,
-    limit: action.payload.pagination.limit,
-  };
-})
+      if (action.payload?.pagination) {
+        state.pagination = {
+          currentPage: action.payload.pagination.currentPage || 1,
+          totalPages: action.payload.pagination.totalPages || 1,
+          totalRecords: action.payload.pagination.totalRecords || 0,
+          limit: action.payload.pagination.limit || 10,
+        };
+      }
+    })
       .addCase(fetchQuotation.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
