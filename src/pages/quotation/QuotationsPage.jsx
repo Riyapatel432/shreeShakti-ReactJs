@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Typography, Breadcrumbs, Link, Chip, Grid, TextField, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, Button, MenuItem, Tooltip, useTheme } from '@mui/material';
-import Snackbar from '../../components/common/Snackbar';
+import Snackbar from '../../components/common/SnackBar';
 import {
   Edit, Delete, NavigateNext as NavIcon, PictureAsPdf as PdfIcon
 } from '@mui/icons-material';

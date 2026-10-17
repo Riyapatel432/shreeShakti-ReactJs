@@ -17,7 +17,7 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import Snackbar from '../../components/common/Snackbar';
+import Snackbar from '../../components/common/SnackBar';
 import DataTable from '../../components/common/DataTable';
 import FormModal from '../../components/common/FormModal';
 

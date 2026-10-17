@@ -16,7 +16,7 @@ import { Box,
   Button,
   MenuItem,
   Tooltip, useTheme } from '@mui/material';
-import Snackbar from '../../components/common/Snackbar';
+import Snackbar from '../../components/common/SnackBar';
 import { DatePicker } from "@mui/x-date-pickers";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";

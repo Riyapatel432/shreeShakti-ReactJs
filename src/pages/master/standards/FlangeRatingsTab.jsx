@@ -6,7 +6,7 @@ import FormModal from "../../../components/common/FormModal";
 import { Box, TextField, Grid, IconButton, Tooltip, MenuItem, Chip } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import Swal from "sweetalert2";
-import Snackbar from "../../../components/common/Snackbar";
+import Snackbar from "../../../components/common/SnackBar";
 
 export default function FlangeRatingsTab() {
   const dispatch = useDispatch();

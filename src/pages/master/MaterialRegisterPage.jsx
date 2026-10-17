@@ -29,7 +29,7 @@ import {
 
 import DataTable from "../../components/common/DataTable";
 import FormModal from "../../components/common/FormModal";
-import Snackbar from '../../components/common/Snackbar';
+import Snackbar from '../../components/common/SnackBar';
 
 import {
   getMaterials,

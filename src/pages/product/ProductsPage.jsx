@@ -17,7 +17,7 @@ import { Box,
   MenuItem,
   // InputAdornment,
   Tooltip, useTheme } from '@mui/material';
-import Snackbar from '../../components/common/Snackbar';
+import Snackbar from '../../components/common/SnackBar';
 import {
   Edit,
   Delete,
