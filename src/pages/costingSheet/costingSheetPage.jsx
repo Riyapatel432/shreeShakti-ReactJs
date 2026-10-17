@@ -362,33 +362,50 @@ if (field === "product") {
       nos = 1,
     } = d || {};
 
-    switch ((categoryName || "").trim().toLowerCase()) {
+    const cat = (categoryName || "").trim().toLowerCase();
+    const count = Number(nos) > 0 ? Number(nos) : 1;
 
-      // Tube & Pipe -> Running Meter
-      case "tube":
-      case "pipe":
-        return (l * nos) / 1000;
-
-      // Plate / Sheet -> Weight
-      case "plate":
-      case "sheet":
-        return (l * w * thk * 7.85 * nos) / 1000000;
-
-      // Round Bar / Shaft -> Weight
-      case "round bar":
-      case "shaft":
-        return (od * od * 0.006165 * l * nos) / 1000;
-
-      // Ring / Flange -> Weight
-      case "ring":
-      case "flange":
-        return (
-          ((od * od - id * id) * 0.006165 * thk * nos) / 1000
-        );
-
-      default:
-        return 0;
+    // 1. If explicit category matches
+    if (cat.includes("tube") || cat.includes("pipe")) {
+      return (Number(l) * count) / 1000;
     }
+    if (cat.includes("plate") || cat.includes("sheet")) {
+      return (Number(l) * Number(w) * Number(thk) * 7.85 * count) / 1000000;
+    }
+    if (cat.includes("round bar") || cat.includes("shaft")) {
+      return (Number(od) * Number(od) * 0.006165 * Number(l) * count) / 1000;
+    }
+    if (cat.includes("ring") || cat.includes("flange")) {
+      return (((Number(od) * Number(od)) - (Number(id) * Number(id))) * 0.006165 * Number(thk) * count) / 1000;
+    }
+
+    // 2. Generic fallback deduction based on filled dimensions:
+    // If Ring / Hollow cylinder: has OD, ID, THK
+    if (Number(od) > 0 && Number(id) > 0 && Number(thk) > 0) {
+      return (((Number(od) * Number(od)) - (Number(id) * Number(id))) * 0.006165 * Number(thk) * count) / 1000;
+    }
+
+    // If Plate/Rectangular: has L, W, THK
+    if (Number(l) > 0 && Number(w) > 0 && Number(thk) > 0) {
+      return (Number(l) * Number(w) * Number(thk) * 7.85 * count) / 1000000;
+    }
+
+    // If Solid Round Bar: has OD and L
+    if (Number(od) > 0 && Number(l) > 0) {
+      return (Number(od) * Number(od) * 0.006165 * Number(l) * count) / 1000;
+    }
+
+    // If Tube: has OD and ID and L
+    if (Number(od) > 0 && Number(id) > 0 && Number(l) > 0) {
+      return (((Number(od) * Number(od)) - (Number(id) * Number(id))) * 0.006165 * Number(l) * count) / 1000;
+    }
+
+    // If Running meter / pipe: has L
+    if (Number(l) > 0) {
+      return (Number(l) * count) / 1000;
+    }
+
+    return 0;
   };
 
   const selectedCategoryName =
@@ -397,16 +414,17 @@ if (field === "product") {
   const calculatedQty = calculateQty(selectedCategoryName, form.dimensions);
   const computedQty =
     calculatedQty > 0
-      ? calculatedQty.toFixed(3)
-      : form.qty
+      ? String(Number(calculatedQty.toFixed(3)))
+      : form.qty !== "" && form.qty !== undefined && form.qty !== null
       ? String(form.qty)
       : "";
+
+  const effectiveQty = Number(computedQty || 0);
+  const effectiveRate = Number(form.rate || 0);
   const computedAmount =
-    calculatedQty > 0
-      ? (calculatedQty * Number(form.rate || 0)).toFixed(2)
-      : form.rate && form.qty
-      ? (Number(form.qty) * Number(form.rate)).toFixed(2)
-      : form.amount
+    effectiveQty > 0 && effectiveRate > 0
+      ? (effectiveQty * effectiveRate).toFixed(2)
+      : form.amount !== "" && form.amount !== undefined && form.amount !== null
       ? String(form.amount)
       : "";
 
@@ -415,7 +433,7 @@ if (field === "product") {
       ...prev,
       dimensions: {
         ...prev.dimensions,
-        [key]: Number(value),
+        [key]: value === "" ? "" : Number(value),
       },
     }));
   };
@@ -780,8 +798,18 @@ const formatDimensions = (dimensions = {}) => {
 <TextField
   fullWidth
   label="Qty (Kg)"
+  type="number"
   value={computedQty}
-  disabled
+  onChange={(e) => {
+    const val = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      qty: val,
+      amount: val && prev.rate ? (Number(val) * Number(prev.rate)).toFixed(2) : prev.amount,
+    }));
+  }}
+  disabled={calculatedQty > 0}
+  helperText={calculatedQty > 0 ? "Auto-calculated from dimensions" : "Enter manual qty if not auto-calculated"}
   slotProps={{
     inputLabel: {
       shrink: true,
@@ -847,9 +875,9 @@ const formatDimensions = (dimensions = {}) => {
 
       {/* DELETE CONFIRM */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
-        <DialogTitle>Delete Product Category</DialogTitle>
+        <DialogTitle>Delete Costing Sheet</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this Product Category?
+          Are you sure you want to delete this Costing Sheet?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
