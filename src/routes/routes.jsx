@@ -42,7 +42,7 @@ const ProductCategoryPage = lazy(() => import('../pages/master/ProductCategoryPa
 const ProductsPage = lazy(() => import('../pages/product/ProductsPage'));
 const PricePage = lazy(() => import('../pages/price/PricePage'));
 const UnitsPage = lazy(() => import('../pages/master/UnitsPage'));
-const MocsPage = lazy(() => import('../pages/master/MocsPage'));
+const MocsPage = lazy(() => import('../pages/master/mocsPage'));
 const CostingSheetPage = lazy(() => import('../pages/costingSheet/costingSheetPage'));
 const MaterialRegisterPage = lazy(() => import('../pages/master/MaterialRegisterPage'));
 const StandardsLibraryPage = lazy(() => import('../pages/master/StandardsLibraryPage'));
