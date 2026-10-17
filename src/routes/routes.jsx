@@ -44,7 +44,6 @@ const PricePage = lazy(() => import('../pages/price/PricePage'));
 const UnitsPage = lazy(() => import('../pages/master/UnitsPage'));
 const MocsPage = lazy(() => import('../pages/master/mocsPage'));
 const CostingSheetPage = lazy(() => import('../pages/costingSheet/costingSheetPage'));
-const MaterialRegisterPage = lazy(() => import('../pages/master/MaterialRegisterPage'));
 const StandardsLibraryPage = lazy(() => import('../pages/master/StandardsLibraryPage'));
 const TechSpecPage = lazy(() => import('../pages/techSpec/TechSpecPage'));
 
@@ -122,7 +121,7 @@ export const adminRoutes = [
   { path: 'purchase/grn',         element: cs('Purchase Management', 'Goods Receipt (GRN)') },
 
   // ── Inventory Management ───────────────────────────────────
-  { path: 'inventory/materials',  element: <MaterialRegisterPage /> },
+  { path: 'inventory/materials',  element: cs('Inventory Management', 'Materials') },
   { path: 'inventory/stock',      element: cs('Inventory Management', 'Main Stock Ledger') },
   { path: 'inventory/transfer',   element: cs('Inventory Management', 'Stock Transfer') },
   { path: 'inventory/adjustment', element: cs('Inventory Management', 'Stock Adjustment') },

@@ -8,12 +8,14 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import Swal from "sweetalert2";
 import { createPurchaseOrder, updatePurchaseOrder, fetchVendors } from "../../redux/slices/purchaseSlice";
-import { getMaterials } from "../../redux/slices/materialSlice";
+import { fetchProduct } from "../../redux/slices/productSlice";
+import { fetchPrice } from "../../redux/slices/priceSlice";
 
 export default function PurchaseOrderFormModal({ open, onClose, po }) {
   const dispatch = useDispatch();
   const { vendors = [] } = useSelector((state) => state.purchase || {});
-  const materials = useSelector((state) => state.materials?.materials || state.materials?.data || []);
+  const { data: products = [] } = useSelector((state) => state.products || {});
+  const { data: prices = [] } = useSelector((state) => state.prices || {});
   
   const [loading, setLoading] = useState(false);
   const isEdit = !!po;
@@ -21,7 +23,8 @@ export default function PurchaseOrderFormModal({ open, onClose, po }) {
   useEffect(() => {
     if (open) {
       dispatch(fetchVendors({ limit: 100 }));
-      dispatch(getMaterials({ limit: 100 }));
+      dispatch(fetchProduct({ limit: 100, status: true }));
+      dispatch(fetchPrice({ limit: 100 }));
     }
   }, [open, dispatch]);
 
@@ -167,14 +170,24 @@ export default function PurchaseOrderFormModal({ open, onClose, po }) {
           <Grid item xs={12}>
             <Typography variant="h6" sx={{ mt: 2 }}>Line Items</Typography>
             <Box sx={{ display: 'flex', gap: 2, mb: 2, mt: 1 }}>
-              <TextField select label="Material" size="small" value={newItem.material} onChange={(e) => {
-                const mat = materials.find(m => m._id === e.target.value);
-                setNewItem({ ...newItem, material: e.target.value, description: mat?.description || mat?.materialName || "", rate: mat?.unitRate || 0 });
+              <TextField select label="Product" size="small" value={newItem.material} onChange={(e) => {
+                const prodId = e.target.value;
+                const prod = products.find(p => p._id === prodId);
+                const latestPrice = prices
+                  .filter(pr => (pr.product?._id === prodId || pr.product === prodId) && pr.status === true)
+                  .sort((a, b) => new Date(b.effective_date) - new Date(a.effective_date))[0];
+                const rate = latestPrice?.current_price || 0;
+                setNewItem({
+                  ...newItem,
+                  material: prodId,
+                  description: prod?.description || prod?.name || "",
+                  rate
+                });
               }} sx={{ flex: 2 }}>
-                <MenuItem value="">-- Select Material --</MenuItem>
-                {materials.map(m => (
-                  <MenuItem key={m._id} value={m._id}>
-                    {m.materialCode ? `${m.materialCode} - ` : ""}{m.description || m.materialName || "Unnamed Material"}
+                <MenuItem value="">-- Select Product --</MenuItem>
+                {products.map(p => (
+                  <MenuItem key={p._id} value={p._id}>
+                    {p.name} {p.moc?.name ? `(${p.moc.name})` : ""}
                   </MenuItem>
                 ))}
               </TextField>
@@ -188,7 +201,7 @@ export default function PurchaseOrderFormModal({ open, onClose, po }) {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Material</TableCell>
+                    <TableCell>Product</TableCell>
                     <TableCell>Description</TableCell>
                     <TableCell>Qty</TableCell>
                     <TableCell>Rate (₹)</TableCell>
@@ -198,10 +211,10 @@ export default function PurchaseOrderFormModal({ open, onClose, po }) {
                 </TableHead>
                 <TableBody>
                   {form.lineItems.map((item, idx) => {
-                    const mat = materials.find(m => m._id === item.material);
+                    const prod = products.find(p => p._id === (item.material?._id || item.material));
                     return (
                       <TableRow key={idx}>
-                        <TableCell>{mat?.materialCode || "Unknown"}</TableCell>
+                        <TableCell>{prod?.name || item.material?.name || "Product"}</TableCell>
                         <TableCell>{item.description}</TableCell>
                         <TableCell>{item.qtyOrdered}</TableCell>
                         <TableCell>{item.rate}</TableCell>

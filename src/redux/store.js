@@ -9,8 +9,6 @@ import priceReducer from './slices/priceSlice';
 import quotationReducer from './slices/quotationSlice';
 import costingSheetReducer from './slices/costingSheet/costingSheetSlice';
 import userReducer from './slices/userSlice';
-import materialCategoryReducer from './slices/materialCategorySlice';
-import materialReducer from './slices/materialSlice';
 import standardsReducer from './slices/standardsSlice';
 import techSpecReducer from './slices/techSpecSlice';
 import purchaseReducer from './slices/purchaseSlice';
@@ -30,8 +28,6 @@ export const store = configureStore({
     quotations: quotationReducer,
     costingSheets: costingSheetReducer,
     users: userReducer,
-    materialCategories: materialCategoryReducer,
-    materials: materialReducer,
     standards: standardsReducer,
     techSpecs: techSpecReducer,
     purchase: purchaseReducer,

@@ -8,9 +8,6 @@ export default function GoodsReceiptModal({ open, onClose, po }) {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   
-  // We fetch materials primarily for descriptions in the PO line items if needed
-  const { data: materials = [] } = useSelector((state) => state.materials || {});
-  
   const [form, setForm] = useState({
     purchaseOrder: po?._id,
     receiptDate: new Date().toISOString().split('T')[0],
@@ -99,7 +96,7 @@ export default function GoodsReceiptModal({ open, onClose, po }) {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Material</TableCell>
+              <TableCell>Product</TableCell>
               <TableCell>Ordered Qty</TableCell>
               <TableCell>Receive Qty</TableCell>
               <TableCell>Reject Qty</TableCell>
@@ -108,16 +105,16 @@ export default function GoodsReceiptModal({ open, onClose, po }) {
           </TableHead>
           <TableBody>
             {form.lineItems.map((item, idx) => {
-              // Try to map back to original PO line item to get description, or look up in materials
               const poLineItem = po.lineItems[idx];
-              const mat = materials.find(m => m._id === item.material);
-              const label = poLineItem?.description || mat?.description || "Unknown Material";
+              const prodName = poLineItem?.material?.name || poLineItem?.description || "Product";
               
               return (
                 <TableRow key={idx}>
                   <TableCell>
-                    <Typography variant="body2" fontWeight="bold">{mat?.materialCode || "N/A"}</Typography>
-                    <Typography variant="caption" color="textSecondary">{label}</Typography>
+                    <Typography variant="body2" fontWeight="bold">{prodName}</Typography>
+                    {poLineItem?.description && poLineItem?.description !== prodName && (
+                      <Typography variant="caption" color="textSecondary">{poLineItem.description}</Typography>
+                    )}
                   </TableCell>
                   <TableCell>{item.qtyOrdered}</TableCell>
                   <TableCell>

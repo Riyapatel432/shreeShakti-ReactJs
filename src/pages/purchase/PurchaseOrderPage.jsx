@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPurchaseOrders, deletePurchaseOrder, updatePurchaseOrderStatus } from "../../redux/slices/purchaseSlice";
-import { fetchVendors } from "../../redux/slices/purchaseSlice";
-import { getMaterials } from "../../redux/slices/materialSlice";
+import { fetchPurchaseOrders, deletePurchaseOrder, updatePurchaseOrderStatus, fetchVendors } from "../../redux/slices/purchaseSlice";
 import DataTable from "../../components/common/DataTable";
 import PurchaseOrderFormModal from "./PurchaseOrderFormModal";
 import GoodsReceiptModal from "./GoodsReceiptModal";
@@ -22,7 +20,6 @@ export default function PurchaseOrderPage() {
   useEffect(() => {
     dispatch(fetchPurchaseOrders());
     dispatch(fetchVendors({ limit: 100 }));
-    dispatch(getMaterials({ limit: 100 }));
   }, [dispatch]);
 
   const handleEdit = (po) => {
